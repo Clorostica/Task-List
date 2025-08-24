@@ -1,9 +1,10 @@
 import { useAuth0 } from "@auth0/auth0-react";
 import React from "react";
 
-const buttonStyles = "px-5 py-2 rounded-full font-semibold shadow-lg transition-colors duration-300";
+const buttonStyles =
+  "px-5 py-2 rounded-full font-semibold shadow-lg transition-colors duration-300";
 
-const LoginButton = () => {
+const Login = () => {
   const { loginWithRedirect } = useAuth0();
 
   return (
@@ -16,4 +17,4 @@ const LoginButton = () => {
   );
 };
 
-export default LoginButton;
+export default Login;

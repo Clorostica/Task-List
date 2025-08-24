@@ -1,11 +1,9 @@
 import React from "react";
-import LoginButton from "./Loginbutton";
-import LogoutButton from "./Logout";
+import Login from "./Login";
+import Logout from "./Logout";
 
 const Header = ({ isAuthenticated }) => {
-  return (
-    <header>{isAuthenticated ? <LogoutButton /> : <LoginButton />}</header>
-  );
+  return <header>{isAuthenticated ? <Logout /> : <Login />}</header>;
 };
 
 export default Header;
