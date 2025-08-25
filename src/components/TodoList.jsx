@@ -60,7 +60,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
       animate={{ opacity: 1, scale: 1, rotate: Math.random() * 6 - 3 }}
       exit={{ opacity: 0, scale: 0.8, rotate: -15 }}
       whileHover={{ scale: 1.05, rotate: 0, zIndex: 10 }}
-      className={`${colorClass} p-4 rounded-lg shadow-lg border-l-4 transition-all duration-200 cursor-grab`}
+      className={`group ${colorClass} p-4 rounded-lg shadow-lg border-l-4 transition-all duration-200 cursor-grab`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -73,10 +73,10 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Write your task..."
-        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium"
+        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-4"
       />
 
-      <div className="flex flex-wrap gap-1 mt-2">
+      <div className="flex flex-wrap gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         {status !== "todo" && (
           <button
             onClick={() => onStatusChange(id, "todo")}
@@ -285,7 +285,7 @@ export default function TodoList({ isAuthenticated = true }) {
   }, [isAuthenticated]);
 
   const addTask = () => {
-    const newTask = { id: Date.now(), text: "", status: "todo" }; // vacío para que sea como placeholder
+    const newTask = { id: Date.now(), text: "", status: "todo" };
     setTodos([...todos, newTask]);
   };
 
