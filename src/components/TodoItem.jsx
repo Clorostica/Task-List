@@ -18,7 +18,7 @@ export default function TodoItem({
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && editText.trim()) {
       onEdit(id, editText.trim());
-      setEditText(""); // Limpia el input después de agregar/editar
+      setEditText("");
     }
   };
 

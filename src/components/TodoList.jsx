@@ -98,14 +98,39 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
             onClick={() => onStatusChange(id, "completed")}
             className="text-xs px-2 py-1 bg-white bg-opacity-60 hover:bg-opacity-90 rounded-full text-gray-700 font-medium"
           >
-            Complete ✓
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5 text-green-500"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-7.5 7.5a1 1 0 01-1.414 0l-3.5-3.5a1 1 0 111.414-1.414L9 12.586l6.793-6.793a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
           </button>
         )}
         <button
           onClick={onDelete}
-          className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-white"
+          className="p-2 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center"
+          title="Delete task"
         >
-          🗑️ Delete
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-5 h-5 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 7V4a1 1 0 011-1h2a1 1 0 011 1v3"
+            />
+          </svg>
         </button>
       </div>
     </motion.div>
@@ -183,7 +208,7 @@ function Column({
       </div>
 
       <div
-        className={`bg-gradient-to-br from-amber-50 to-yellow-50 p-6 rounded-b-xl min-h-[550px] relative border-4 transition-all duration-200 ${
+        className={`bg-gradient-to-br from-amber-50 to-yellow-50 p-6 rounded-b-xl min-h-[420px] relative border-4 transition-all duration-200 ${
           isOver ? "border-blue-400 bg-blue-50 scale-102" : "border-amber-200"
         }`}
         onDragOver={handleDragOver}
@@ -209,7 +234,7 @@ function Column({
                 initial={{
                   opacity: 0,
                   y: -20,
-                  rotate: Math.random() * 20 - 10,
+                  rotate: Math.random() * 6 - 3,
                 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -200, rotate: -20 }}
