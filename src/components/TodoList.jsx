@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./Search";
 
-// useDrag Hook
+const stickyColors = [
+  "bg-yellow-200 border-yellow-300",
+  "bg-pink-200 border-pink-300",
+  "bg-blue-200 border-blue-300",
+  "bg-green-200 border-green-300",
+  "bg-purple-200 border-purple-300",
+  "bg-orange-200 border-orange-300",
+];
+
+// Hook para drag
 const useDrag = ({ id, text, status }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -19,24 +28,30 @@ const useDrag = ({ id, text, status }) => {
   return { isDragging, handleDragStart, handleDragEnd };
 };
 
-// Sticky Colors
-const stickyColors = [
-  "bg-yellow-200 border-yellow-300",
-  "bg-pink-200 border-pink-300",
-  "bg-blue-200 border-blue-300",
-  "bg-green-200 border-green-300",
-  "bg-purple-200 border-purple-300",
-  "bg-orange-200 border-orange-300",
-];
-
-// TodoItem Component
+// Componente TodoItem editable directamente
 function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
-  const colorClass = stickyColors[id % stickyColors.length];
+  const [editText, setEditText] = useState(text);
   const { isDragging, handleDragStart, handleDragEnd } = useDrag({
     id,
     text,
     status,
   });
+  const colorClass = stickyColors[id % stickyColors.length];
+
+  const handleBlur = () => {
+    if (editText.trim() && editText !== text) {
+      onEdit(id, editText.trim());
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (editText.trim()) {
+        onEdit(id, editText.trim());
+      }
+    }
+  };
 
   return (
     <motion.div
@@ -45,39 +60,23 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
       animate={{ opacity: 1, scale: 1, rotate: Math.random() * 6 - 3 }}
       exit={{ opacity: 0, scale: 0.8, rotate: -15 }}
       whileHover={{ scale: 1.05, rotate: 0, zIndex: 10 }}
-      className={`${colorClass} p-4 rounded-lg shadow-lg border-l-4 transition-all duration-200 cursor-grab group relative ${
-        isDragging ? "opacity-50 z-50" : ""
-      }`}
-      style={{ fontFamily: "Comic Sans MS, cursive" }}
+      className={`${colorClass} p-4 rounded-lg shadow-lg border-l-4 transition-all duration-200 cursor-grab`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* Tape effect */}
       <div className="absolute -top-2 left-1/4 w-12 h-6 bg-white bg-opacity-70 rotate-12 shadow-sm"></div>
 
-      <div className="flex justify-between items-start mb-3">
-        <p className="text-gray-800 flex-1 pr-2 font-medium leading-relaxed">
-          {text}
-        </p>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={onEdit}
-            className="text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded bg-white bg-opacity-50 hover:bg-opacity-80"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded bg-white bg-opacity-50 hover:bg-opacity-80"
-          >
-            🗑️
-          </button>
-        </div>
-      </div>
+      <textarea
+        value={editText}
+        onChange={(e) => setEditText(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        placeholder="Write your task..."
+        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium"
+      />
 
-      {/* Status buttons */}
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 mt-2">
         {status !== "todo" && (
           <button
             onClick={() => onStatusChange(id, "todo")}
@@ -102,37 +101,17 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
             Complete ✓
           </button>
         )}
+        <button
+          onClick={onDelete}
+          className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 rounded text-white"
+        >
+          🗑️ Delete
+        </button>
       </div>
     </motion.div>
   );
 }
 
-// NewTask Component
-function NewTask({ taskText, setTaskText, addTask }) {
-  return (
-    <div className="mb-6 bg-white p-6 rounded-xl shadow-sm border">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">Add New Task</h2>
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={taskText}
-          onChange={(e) => setTaskText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTask()}
-          placeholder="What needs to be done?"
-          className="flex-1 border border-gray-300 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          onClick={addTask}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
-        >
-          Add Task
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Column Component
 function Column({
   title,
   tasks,
@@ -142,7 +121,21 @@ function Column({
   bgColor,
   textColor,
   columnStatus,
+  addTask,
 }) {
+  const [columnTasks, setColumnTasks] = useState(tasks);
+  useEffect(() => {
+    setColumnTasks(tasks);
+  }, [tasks]);
+
+  const moveTask = (draggedId, hoverId) => {
+    const draggedIndex = columnTasks.findIndex((t) => t.id === draggedId);
+    const hoverIndex = columnTasks.findIndex((t) => t.id === hoverId);
+    const updatedTasks = [...columnTasks];
+    const [removed] = updatedTasks.splice(draggedIndex, 1);
+    updatedTasks.splice(hoverIndex, 0, removed);
+    setColumnTasks(updatedTasks);
+  };
   const [isOver, setIsOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -171,14 +164,31 @@ function Column({
         className={`${bgColor} ${textColor} p-4 rounded-t-xl font-bold text-xl flex items-center justify-between shadow-lg`}
       >
         <span>{title}</span>
-        <span className="bg-white bg-opacity-30 px-3 py-1 rounded-full text-base font-semibold">
-          {tasks.length}
-        </span>
+
+        <div className="flex items-center gap-3">
+          <span className="bg-white bg-opacity-30 px-3 py-1 rounded-full text-base font-semibold">
+            {tasks.length}
+          </span>
+
+          {columnStatus === "todo" && (
+            <button
+              onClick={addTask}
+              className="w-8 h-8 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full font-bold text-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+              title="Add new task"
+            >
+              +
+            </button>
+          )}
+        </div>
       </div>
+
       <div
         className={`bg-gradient-to-br from-amber-50 to-yellow-50 p-6 rounded-b-xl min-h-[550px] relative border-4 transition-all duration-200 ${
           isOver ? "border-blue-400 bg-blue-50 scale-102" : "border-amber-200"
         }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
           backgroundImage: `
             radial-gradient(circle at 25% 25%, #d4c5a9 2px, transparent 2px),
@@ -188,15 +198,14 @@ function Column({
           `,
           backgroundSize: "50px 50px",
         }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
       >
         <div className="space-y-4 relative z-10">
           <AnimatePresence>
             {tasks.map((task) => (
               <motion.div
                 key={task.id}
+                layout
+                drag="y"
                 initial={{
                   opacity: 0,
                   y: -20,
@@ -214,13 +223,14 @@ function Column({
                   text={task.text}
                   status={task.status}
                   onDelete={() => onDelete(task.id)}
-                  onEdit={() => onEdit(task.id)}
+                  onEdit={onEdit}
                   onStatusChange={onStatusChange}
                 />
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
+
         {tasks.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
@@ -239,46 +249,27 @@ function Column({
   );
 }
 
-// Main TodoList Component
 export default function TodoList({ isAuthenticated = true }) {
   const [todos, setTodos] = useState([]);
-  const [taskText, setTaskText] = useState("");
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const sampleData = [
-        { id: 1, text: "Review project proposal", status: "todo" },
-        { id: 2, text: "Design new landing page", status: "progress" },
-        { id: 3, text: "Set up development environment", status: "completed" },
-      ];
-      setTodos(sampleData);
-    } else {
+    if (!isAuthenticated) {
       setTodos([]);
     }
   }, [isAuthenticated]);
 
   const addTask = () => {
-    if (!taskText.trim()) return;
-    setTodos([
-      ...todos,
-      { id: Date.now(), text: taskText.trim(), status: "todo" },
-    ]);
-    setTaskText("");
+    const newTask = { id: Date.now(), text: "", status: "todo" }; // vacío para que sea como placeholder
+    setTodos([...todos, newTask]);
   };
 
   const handleDelete = (id) => setTodos(todos.filter((t) => t.id !== id));
-  const handleEdit = (id) => {
-    const newText = prompt("Edit task:");
-    if (newText && newText.trim())
-      setTodos(
-        todos.map((t) => (t.id === id ? { ...t, text: newText.trim() } : t))
-      );
-  };
+  const handleEdit = (id, newText) =>
+    setTodos(todos.map((t) => (t.id === id ? { ...t, text: newText } : t)));
   const handleStatusChange = (id, newStatus) =>
     setTodos(todos.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
 
-  // Filtered tasks
   const filteredTodos = todos.filter((t) =>
     t.text.toLowerCase().includes(search.toLowerCase())
   );
@@ -288,46 +279,40 @@ export default function TodoList({ isAuthenticated = true }) {
 
   return (
     <div>
-      <div>
-        <NewTask
-          taskText={taskText}
-          setTaskText={setTaskText}
+      <SearchBar search={search} setSearch={setSearch} />
+
+      <div className="flex gap-0 overflow-x-auto pb-4">
+        <Column
+          title="📝 To Do"
+          tasks={todoTasks}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onStatusChange={handleStatusChange}
+          bgColor="bg-gradient-to-r from-slate-600 to-slate-700"
+          textColor="text-white"
+          columnStatus="todo"
           addTask={addTask}
         />
-        <SearchBar search={search} setSearch={setSearch} />
-
-        <div className="flex gap-0 overflow-x-auto pb-4">
-          <Column
-            title="📝 To Do"
-            tasks={todoTasks}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            onStatusChange={handleStatusChange}
-            bgColor="bg-gradient-to-r from-slate-600 to-slate-700"
-            textColor="text-white"
-            columnStatus="todo"
-          />
-          <Column
-            title="🚀 In Progress"
-            tasks={progressTasks}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            onStatusChange={handleStatusChange}
-            bgColor="bg-gradient-to-r from-yellow-500 to-yellow-600"
-            textColor="text-white"
-            columnStatus="progress"
-          />
-          <Column
-            title="✅ Completed"
-            tasks={completedTasks}
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            onStatusChange={handleStatusChange}
-            bgColor="bg-gradient-to-r from-green-500 to-green-600"
-            textColor="text-white"
-            columnStatus="completed"
-          />
-        </div>
+        <Column
+          title="🚀 In Progress"
+          tasks={progressTasks}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onStatusChange={handleStatusChange}
+          bgColor="bg-gradient-to-r from-yellow-500 to-yellow-600"
+          textColor="text-white"
+          columnStatus="progress"
+        />
+        <Column
+          title="✅ Completed"
+          tasks={completedTasks}
+          onDelete={handleDelete}
+          onEdit={handleEdit}
+          onStatusChange={handleStatusChange}
+          bgColor="bg-gradient-to-r from-green-500 to-green-600"
+          textColor="text-white"
+          columnStatus="completed"
+        />
       </div>
     </div>
   );

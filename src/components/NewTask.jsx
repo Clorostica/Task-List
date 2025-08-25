@@ -1,25 +1,26 @@
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 
 function NewTask({ taskText, setTaskText, addTask }) {
   const inputRef = useRef(null);
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddTask();
     }
   };
 
   const handleAddTask = () => {
-    if (taskText.trim() !== '') {
+    if (taskText.trim() !== "") {
       addTask();
-      setTaskText(''); 
+      setTaskText("");
       inputRef.current?.focus();
     }
   };
 
   return (
-        <div className="
+    <div
+      className="
         pb-8               
         p-8                
         bg-gray-100 bg-opacity-80
@@ -30,7 +31,8 @@ function NewTask({ taskText, setTaskText, addTask }) {
         justify-between
         space-x-4
         overflow-hidden
-        ">
+        "
+    >
       <input
         ref={inputRef}
         type="text"
@@ -44,7 +46,7 @@ function NewTask({ taskText, setTaskText, addTask }) {
         onChange={(e) => setTaskText(e.target.value)}
         onKeyDown={handleKeyPress}
       />
-        <button
+      <button
         className="
             bg-pink-500 text-white px-8 py-4 text-xl font-semibold
             hover:bg-pink-600 active:bg-pink-700
@@ -55,12 +57,11 @@ function NewTask({ taskText, setTaskText, addTask }) {
         "
         onClick={handleAddTask}
         type="button"
-        >
+      >
         Add
-        </button>
+      </button>
     </div>
   );
 }
 
 export default NewTask;
-
