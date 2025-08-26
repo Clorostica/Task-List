@@ -28,7 +28,7 @@ A modern task management app built with React, Tailwind CSS, and Auth0. Manage y
 1. 🖥️ Clone the repository
 Open your terminal and run:
 
-git clone https://github.com/your-username/sticky-task-board.git
+git clone https://github.com/Clorostica/Task-List.git
 cd sticky-task-board
 
 
