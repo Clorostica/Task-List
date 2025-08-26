@@ -1,46 +1,46 @@
-# ✅ Task List App
+✅ Sticky Task Board App
 
-A task management application built with **React** and **Auth0** authentication. It allows authenticated users to securely manage their to-dos with a clean and modern interface.
+A modern task management application built with React, Tailwind CSS, and Auth0 authentication. Authenticated users can manage their tasks on a sticky note style board with drag & drop, responsive layout, and inline editing.
 
-## 🚀 Features
+🚀 Features
 
-- 🔐 Secure login with Auth0
-- ✅ Add, update, and delete tasks
-- 🌙 Responsive and clean UI
-- ⚛️ Built with React and Tailwind CSS
+🔐 Secure login with Auth0
 
-## 🧩 Tech Stack
+📝 Add, edit, and delete tasks directly on the sticky notes
 
-- [React](https://reactjs.org/)
-- [Auth0](https://auth0.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
+🎨 Sticky note style board with color-coded tasks
 
-## 🖥️ Installation
+✨ Drag & drop tasks to reorder within a column or move between columns
 
-1. **Clone the repository**
+👀 Hover effects: action buttons appear only when hovering over a task
 
-```bash
-git clone https://github.com/your-username/task-list-app.git
-cd task-list-app
+🌙 Responsive and clean UI, works on desktop and mobile
+
+⚛️ Built with React and Tailwind CSS
+
+🧩 Tech Stack
+
+React
+Auth0
+Tailwind CSS
+Framer Motion for smooth animations
+
+🖥️ Installation
+
+Clone the repository
+git clone https://github.com/your-username/sticky-task-board.git
+cd sticky-task-board
+
+
 Install dependencies
-
-bash
-Copiar
-Editar
 npm install
 Set up Auth0
 
 Create a .env file in the root directory and add your Auth0 credentials:
-
-env
-Copiar
-Editar
 REACT_APP_AUTH0_DOMAIN=your-domain.auth0.com
 REACT_APP_AUTH0_CLIENT_ID=your-client-id
+
+
 Run the development server
 
-bash
-Copiar
-Editar
 npm start
-Your app should now be running on http://localhost:3000.
