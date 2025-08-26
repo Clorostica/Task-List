@@ -12,23 +12,23 @@ export default function App() {
   }
 
   return (
-    <div className="p-4 bg-gradient-to-br from-orange-100 via-yellow-50 to-amber-100 min-h-screen">
-      {/* Header y Título en la misma línea */}
-      <div className="flex items-center justify-between mb-6">
-        {/* Espaciador izquierdo para equilibrar */}
-        <div className="w-[200px]"></div>
+    <div className="p-2 sm:p-4 bg-gradient-to-br from-orange-100 via-yellow-50 to-amber-100 min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+        <div className="hidden sm:block w-[200px]"></div>
 
         <h1
-          className="text-4xl font-bold text-gray-800 text-center drop-shadow-lg"
+          className="text-2xl sm:text-4xl font-bold text-gray-800 text-center drop-shadow-lg px-2"
           style={{ fontFamily: "Comic Sans MS, cursive" }}
         >
           🖇️ My Sticky Note Board
         </h1>
 
-        <Header isAuthenticated={isAuthenticated} />
+        <div className="flex justify-center sm:justify-end">
+          <Header isAuthenticated={isAuthenticated} />
+        </div>
       </div>
 
-      <div className="max-w-full mx-auto">
+      <div className="max-w-full mx-auto px-1 sm:px-0">
         <TodoList isAuthenticated={isAuthenticated} />
       </div>
     </div>

@@ -11,7 +11,6 @@ const stickyColors = [
   "bg-orange-200 border-orange-300",
 ];
 
-// Hook para drag
 const useDrag = ({ id, text, status }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -78,7 +77,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
         damping: 20,
         duration: 0.3,
       }}
-      className={`group ${colorClass} p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 cursor-grab relative overflow-hidden`}
+      className={`group ${colorClass} p-3 sm:p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 cursor-grab relative overflow-hidden`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -86,7 +85,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <motion.div
-        className="absolute -top-2 left-1/4 w-12 h-6 bg-white bg-opacity-70 rotate-12 shadow-sm"
+        className="absolute -top-2 left-1/4 w-8 sm:w-12 h-4 sm:h-6 bg-white bg-opacity-70 rotate-12 shadow-sm"
         animate={{
           rotate: isHovered ? 8 : 12,
           scale: isHovered ? 1.1 : 1,
@@ -107,11 +106,12 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Write your task..."
-        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-4 relative z-10"
+        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-3 sm:mt-4 relative z-10 text-sm sm:text-base"
+        rows="2"
       />
 
       <motion.div
-        className="absolute top-2 right-2 flex gap-2 z-20"
+        className="absolute top-1 sm:top-2 right-1 sm:right-2 flex gap-1 sm:gap-2 z-20"
         initial={{ opacity: 0, scale: 0.8, y: -10 }}
         animate={{
           opacity: isHovered ? 1 : 0,
@@ -125,17 +125,21 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
             onClick={() => onStatusChange(id, "todo")}
             whileHover={{ scale: 1.1, rotate: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="group/btn relative px-2 py-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
+            className="group/btn relative px-1 sm:px-2 py-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
           >
             <span className="relative z-10 flex items-center gap-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-2 sm:w-3 h-2 sm:h-3"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path
                   fillRule="evenodd"
                   d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
                   clipRule="evenodd"
                 />
               </svg>
-              To Do
+              <span className="hidden sm:inline">To Do</span>
             </span>
             <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 rounded-full transition-opacity duration-200" />
           </motion.button>
@@ -146,13 +150,13 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
             onClick={() => onStatusChange(id, "progress")}
             whileHover={{ scale: 1.1, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
-            className="group/btn relative px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
+            className="group/btn relative px-1 sm:px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
           >
             <span className="relative z-10 flex items-center gap-1">
               {status === "todo" ? (
                 <>
                   <svg
-                    className="w-3 h-3"
+                    className="w-2 sm:w-3 h-2 sm:h-3"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -162,12 +166,12 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Start
+                  <span className="hidden sm:inline">Start</span>
                 </>
               ) : (
                 <>
                   <svg
-                    className="w-3 h-3"
+                    className="w-2 sm:w-3 h-2 sm:h-3"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -177,7 +181,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Progress
+                  <span className="hidden sm:inline">Progress</span>
                 </>
               )}
             </span>
@@ -190,10 +194,10 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
             onClick={() => onStatusChange(id, "completed")}
             whileHover={{ scale: 1.1, rotate: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="group/btn relative w-8 h-8 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
+            className="group/btn relative w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
           >
             <svg
-              className="w-4 h-4 relative z-10"
+              className="w-3 sm:w-4 h-3 sm:h-4 relative z-10"
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -211,11 +215,11 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
           onClick={onDelete}
           whileHover={{ scale: 1.1, rotate: 3 }}
           whileTap={{ scale: 0.95 }}
-          className="group/btn relative w-8 h-8 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
+          className="group/btn relative w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
           title="Delete task"
         >
           <svg
-            className="w-4 h-4 relative z-10"
+            className="w-3 sm:w-4 h-3 sm:h-4 relative z-10"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -230,7 +234,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
       </motion.div>
 
       <motion.div
-        className="absolute bottom-0 right-0 w-6 h-6 bg-gray-300 bg-opacity-30"
+        className="absolute bottom-0 right-0 w-4 sm:w-6 h-4 sm:h-6 bg-gray-300 bg-opacity-30"
         style={{
           clipPath: "polygon(100% 0, 0 100%, 100% 100%)",
         }}
@@ -291,14 +295,14 @@ function Column({
   };
 
   return (
-    <div className="flex-1 min-h-[600px] mx-2">
+    <div className="flex-1 min-h-[400px] sm:min-h-[600px] mx-1 sm:mx-2 min-w-[280px] sm:min-w-0">
       <div
-        className={`${bgColor} ${textColor} p-4 rounded-t-xl font-bold text-xl flex items-center justify-between shadow-lg`}
+        className={`${bgColor} ${textColor} p-3 sm:p-4 rounded-t-xl font-bold text-lg sm:text-xl flex items-center justify-between shadow-lg`}
       >
-        <span>{title}</span>
+        <span className="text-sm sm:text-xl">{title}</span>
 
-        <div className="flex items-center gap-3">
-          <span className="bg-white bg-opacity-30 px-3 py-1 rounded-full text-base font-semibold">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="bg-white bg-opacity-30 px-2 sm:px-3 py-1 rounded-full text-sm sm:text-base font-semibold">
             {tasks.length}
           </span>
 
@@ -306,7 +310,7 @@ function Column({
             onClick={() => addTask(columnStatus)}
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
-            className="w-8 h-8 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full font-bold text-lg flex items-center justify-center transition-all duration-200 group"
+            className="w-7 sm:w-8 h-7 sm:h-8 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full font-bold text-base sm:text-lg flex items-center justify-center transition-all duration-200 group"
             title={`Add new task to ${title}`}
           >
             <span className="group-hover:rotate-90 transition-transform duration-200">
@@ -317,7 +321,7 @@ function Column({
       </div>
 
       <div
-        className={`bg-gradient-to-br from-amber-50 to-yellow-50 p-6 rounded-b-xl min-h-[420px] relative border-4 transition-all duration-200 ${
+        className={`bg-gradient-to-br from-amber-50 to-yellow-50 p-3 sm:p-6 rounded-b-xl min-h-[320px] sm:min-h-[420px] relative border-4 transition-all duration-200 ${
           isOver ? "border-blue-400 bg-blue-50 scale-102" : "border-amber-200"
         }`}
         onDragOver={handleDragOver}
@@ -330,10 +334,10 @@ function Column({
             radial-gradient(circle at 25% 75%, #d4c5a9 2px, transparent 2px),
             radial-gradient(circle at 75% 75%, #d4c5a9 2px, transparent 2px)
           `,
-          backgroundSize: "50px 50px",
+          backgroundSize: "30px 30px, 30px 30px, 30px 30px, 30px 30px",
         }}
       >
-        <div className="space-y-4 relative z-10">
+        <div className="space-y-3 sm:space-y-4 relative z-10">
           <AnimatePresence>
             {tasks.map((task) => (
               <motion.div
@@ -348,8 +352,8 @@ function Column({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -200, rotate: -20 }}
                 style={{
-                  marginLeft: `${Math.random() * 20}px`,
-                  marginTop: `${Math.random() * 10}px`,
+                  marginLeft: `${Math.random() * 10}px`,
+                  marginTop: `${Math.random() * 5}px`,
                 }}
               >
                 <TodoItem
@@ -368,7 +372,7 @@ function Column({
         {tasks.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <motion.div
-              className={`text-center text-lg italic font-medium px-6 py-3 rounded-lg shadow-sm transition-all duration-200 ${
+              className={`text-center text-sm sm:text-lg italic font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-sm transition-all duration-200 ${
                 isOver
                   ? "text-blue-600 bg-blue-100 bg-opacity-90 scale-110"
                   : "text-amber-400 bg-white bg-opacity-70"
@@ -419,7 +423,7 @@ export default function TodoList({ isAuthenticated = true }) {
     <div>
       <SearchBar search={search} setSearch={setSearch} />
 
-      <div className="flex gap-0 overflow-x-auto pb-4">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 overflow-x-auto pb-4">
         <Column
           title="📝 To Do"
           tasks={todoTasks}
