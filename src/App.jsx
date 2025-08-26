@@ -5,7 +5,7 @@ import TodoList from "./components/TodoList";
 
 export default function App() {
   console.log(import.meta.env.VITE_AUTH0_CLIENT_ID);
-  const { isAuthenticated, isLoading } = useAuth0();
+  const { isAuthenticated, isLoading, user, loginWithRedirect } = useAuth0();
 
   if (isLoading) {
     return <div className="text-center mt-12">Loading...</div>;
@@ -13,16 +13,22 @@ export default function App() {
 
   return (
     <div className="p-4 bg-gradient-to-br from-orange-100 via-yellow-50 to-amber-100 min-h-screen">
-      <Header isAuthenticated={isAuthenticated} />
+      {/* Header y Título en la misma línea */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Espaciador izquierdo para equilibrar */}
+        <div className="w-[200px]"></div>
 
-      <div className="max-w-full mx-auto">
         <h1
-          className="text-4xl font-bold text-gray-800 mb-6 text-center drop-shadow-lg"
+          className="text-4xl font-bold text-gray-800 text-center drop-shadow-lg"
           style={{ fontFamily: "Comic Sans MS, cursive" }}
         >
           🖇️ My Sticky Note Board
         </h1>
 
+        <Header isAuthenticated={isAuthenticated} />
+      </div>
+
+      <div className="max-w-full mx-auto">
         <TodoList isAuthenticated={isAuthenticated} />
       </div>
     </div>
