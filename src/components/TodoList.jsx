@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./Search";
 
@@ -27,10 +28,19 @@ const useDrag = ({ id, text, status }) => {
   return { isDragging, handleDragStart, handleDragEnd };
 };
 
+TodoItem.propTypes = {
+  id: PropTypes.number.isRequired,
+  text: PropTypes.string.isRequired,
+  status: PropTypes.string.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+};
+
 function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
   const [editText, setEditText] = useState(text);
   const [isHovered, setIsHovered] = useState(false);
-  const { isDragging, handleDragStart, handleDragEnd } = useDrag({
+  const { handleDragStart, handleDragEnd } = useDrag({
     id,
     text,
     status,
@@ -248,6 +258,17 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
   );
 }
 
+Column.propTypes = {
+  title: PropTypes.string.isRequired,
+  tasks: PropTypes.string.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  bgColor: PropTypes.string,
+  textColor: PropTypes.string,
+  columnStatus: PropTypes.string.isRequired,
+  addTask: PropTypes.func.isRequired,
+};
 function Column({
   title,
   tasks,
@@ -259,19 +280,6 @@ function Column({
   columnStatus,
   addTask,
 }) {
-  const [columnTasks, setColumnTasks] = useState(tasks);
-  useEffect(() => {
-    setColumnTasks(tasks);
-  }, [tasks]);
-
-  const moveTask = (draggedId, hoverId) => {
-    const draggedIndex = columnTasks.findIndex((t) => t.id === draggedId);
-    const hoverIndex = columnTasks.findIndex((t) => t.id === hoverId);
-    const updatedTasks = [...columnTasks];
-    const [removed] = updatedTasks.splice(draggedIndex, 1);
-    updatedTasks.splice(hoverIndex, 0, removed);
-    setColumnTasks(updatedTasks);
-  };
   const [isOver, setIsOver] = useState(false);
 
   const handleDragOver = (e) => {
@@ -391,6 +399,9 @@ function Column({
   );
 }
 
+TodoList.propTypes = {
+  isAuthenticated: PropTypes.bool.isRequired,
+};
 export default function TodoList({ isAuthenticated = true }) {
   const [todos, setTodos] = useState([]);
   const [search, setSearch] = useState("");
