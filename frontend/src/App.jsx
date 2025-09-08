@@ -4,7 +4,6 @@ import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 
 export default function App() {
-  console.log(import.meta.env.VITE_AUTH0_CLIENT_ID);
   const { isAuthenticated, isLoading } = useAuth0();
 
   if (isLoading) {
