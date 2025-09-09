@@ -346,23 +346,17 @@ function Column({
         }}
       >
         <div className="space-y-3 sm:space-y-4 relative z-10">
-          <AnimatePresence>
+          <AnimatePresence initial={false}>
             {tasks.map((task) => (
               <motion.div
                 key={task.id}
                 layout
                 drag="y"
-                initial={{
-                  opacity: 0,
-                  y: -20,
-                  rotate: Math.random() * 6 - 3,
-                }}
+                initial={{ opacity: 0.2, y: 0 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -200, rotate: -20 }}
-                style={{
-                  marginLeft: `${Math.random() * 10}px`,
-                  marginTop: `${Math.random() * 5}px`,
-                }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0 }}
+                layoutTransition={{ duration: 0 }}
               >
                 <TodoItem
                   id={task.id}
@@ -399,18 +393,36 @@ function Column({
   );
 }
 
+const getStoredTodos = (isAuthenticated) => {
+  if (!isAuthenticated) return [];
+
+  const stored = localStorage.getItem("todos");
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error("Error parsing todos from localStorage:", error);
+      return [];
+    }
+  }
+
+  return [];
+};
+
 TodoList.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
 };
 export default function TodoList({ isAuthenticated = true }) {
-  const [todos, setTodos] = useState([]);
+  // Cargar todos del localStorage solo una vez al montar el componente
+  const [todos, setTodos] = useState(getStoredTodos(isAuthenticated));
   const [search, setSearch] = useState("");
 
+  // Guardar en localStorage cuando cambian los todos (solo si está autenticado)
   useEffect(() => {
-    if (!isAuthenticated) {
-      setTodos([]);
+    if (isAuthenticated) {
+      localStorage.setItem("todos", JSON.stringify(todos));
     }
-  }, [isAuthenticated]);
+  }, [todos, isAuthenticated]);
 
   const addTask = (status = "todo") => {
     const newTask = { id: Date.now(), text: "", status };
