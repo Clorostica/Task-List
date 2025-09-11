@@ -394,12 +394,10 @@ function Column({
 }
 
 const getStoredTodos = (isAuthenticated, user) => {
-  console.log(user.email);
-
-  if (!isAuthenticated || !user.email) return [];
+  if (!isAuthenticated || !user?.email) return [];
 
   // get todos from local stroage, for a specific user.email
-  const stored = localStorage.getItem("todos");
+  const stored = localStorage.getItem(`todos_${user.email}`);
   if (stored) {
     try {
       return JSON.parse(stored);
