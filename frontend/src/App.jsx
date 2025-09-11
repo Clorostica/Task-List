@@ -4,7 +4,7 @@ import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 
 export default function App() {
-  const { isAuthenticated, isLoading } = useAuth0();
+  const { isAuthenticated, isLoading, user } = useAuth0();
 
   if (isLoading) {
     return <div className="text-center mt-12">Loading...</div>;
@@ -28,7 +28,7 @@ export default function App() {
       </div>
 
       <div className="max-w-full mx-auto px-1 sm:px-0">
-        <TodoList isAuthenticated={isAuthenticated} />
+        <TodoList isAuthenticated={isAuthenticated} user={user} />
       </div>
     </div>
   );

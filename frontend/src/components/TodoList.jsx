@@ -393,9 +393,12 @@ function Column({
   );
 }
 
-const getStoredTodos = (isAuthenticated) => {
-  if (!isAuthenticated) return [];
+const getStoredTodos = (isAuthenticated, user) => {
+  console.log(user.email);
 
+  if (!isAuthenticated || !user.email) return [];
+
+  // get todos from local stroage, for a specific user.email
   const stored = localStorage.getItem("todos");
   if (stored) {
     try {
@@ -411,18 +414,24 @@ const getStoredTodos = (isAuthenticated) => {
 
 TodoList.propTypes = {
   isAuthenticated: PropTypes.bool.isRequired,
+  user: PropTypes.any,
 };
-export default function TodoList({ isAuthenticated = true }) {
-  // Cargar todos del localStorage solo una vez al montar el componente
-  const [todos, setTodos] = useState(getStoredTodos(isAuthenticated));
+export default function TodoList({ isAuthenticated = false, user }) {
+  //mount a component
+  const [todos, setTodos] = useState(() =>
+    getStoredTodos(isAuthenticated, user)
+  );
   const [search, setSearch] = useState("");
+  const saveTodos = (email, todos) => {
+    localStorage.setItem(`todos_${email}`, JSON.stringify(todos));
+  };
 
-  // Guardar en localStorage cuando cambian los todos (solo si está autenticado)
+  //saves todos for a specific user.
   useEffect(() => {
-    if (isAuthenticated) {
-      localStorage.setItem("todos", JSON.stringify(todos));
+    if (isAuthenticated && user?.email) {
+      saveTodos(user.email, todos);
     }
-  }, [todos, isAuthenticated]);
+  }, [todos, isAuthenticated, user?.email]);
 
   const addTask = (status = "todo") => {
     const newTask = { id: Date.now(), text: "", status };
