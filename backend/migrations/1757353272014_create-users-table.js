@@ -7,7 +7,7 @@ exports.up = (pgm) => {
     email: {
       type: 'text',
       notNull: true,
-      unique: true
+      unique: true,
     }
   });
 };
