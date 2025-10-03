@@ -465,8 +465,31 @@ export default function TodoList({ isAuthenticated = false, user }) {
     }
   };
 
-  const handleEdit = (id, newText) =>
-    setTodos(todos.map((t) => (t.id === id ? { ...t, text: newText } : t)));
+  const handleEdit = async (id, newText) => {
+    try {
+      const task = todos.find((t) => t.id === id);
+      if (!task) return;
+
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: newText,
+          status: task.status,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Error updating task");
+
+      const updatedTask = await res.json();
+
+      // Actualizamos el estado local
+      setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+    } catch (err) {
+      console.error("❌ Error editing task:", err);
+    }
+  };
+  setTodos(todos.map((t) => (t.id === id ? { ...t, text: newText } : t)));
   const handleStatusChange = (id, newStatus) =>
     setTodos(todos.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
 
