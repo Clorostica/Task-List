@@ -448,7 +448,23 @@ export default function TodoList({ isAuthenticated = false, user }) {
     }
   };
 
-  const handleDelete = (id) => setTodos(todos.filter((t) => t.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Error deleting task");
+
+      const data = await res.json();
+      console.log(data);
+
+      setTodos((prev) => prev.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("❌ Error deleting task:", err);
+    }
+  };
+
   const handleEdit = (id, newText) =>
     setTodos(todos.map((t) => (t.id === id ? { ...t, text: newText } : t)));
   const handleStatusChange = (id, newStatus) =>
