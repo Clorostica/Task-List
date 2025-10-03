@@ -74,7 +74,6 @@ app.post("/tasks", async (req, res) => {
     // Validaciones
     if (!user_id) return res.status(400).json({ error: "user_id is required" });
     if (!status) return res.status(400).json({ error: "status is required" });
-    if (!text) return res.status(400).json({ error: "text is required" });
 
     // Verificar que el usuario existe
     const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [user_id]);

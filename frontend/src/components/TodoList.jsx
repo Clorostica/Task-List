@@ -435,7 +435,7 @@ export default function TodoList({ isAuthenticated = false, user }) {
         body: JSON.stringify({
           user_id: 3,
           status,
-          text: "Nueva tarea desde frontend",
+          text: "",
         }),
       });
 
