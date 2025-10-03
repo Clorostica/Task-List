@@ -260,13 +260,10 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
 
 Column.propTypes = {
   title: PropTypes.string.isRequired,
-  tasks: PropTypes.string.isRequired,
+  tasks: PropTypes.array.isRequired,
   onDelete: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func.isRequired,
-  bgColor: PropTypes.string,
-  textColor: PropTypes.string,
-  columnStatus: PropTypes.string.isRequired,
   addTask: PropTypes.func.isRequired,
 };
 function Column({
@@ -415,7 +412,6 @@ TodoList.propTypes = {
   user: PropTypes.any,
 };
 export default function TodoList({ isAuthenticated = false, user }) {
-  //mount a component
   const [todos, setTodos] = useState(() =>
     getStoredTodos(isAuthenticated, user)
   );
@@ -430,10 +426,26 @@ export default function TodoList({ isAuthenticated = false, user }) {
       saveTodos(user.email, todos);
     }
   }, [todos, isAuthenticated, user?.email]);
+  const API_URL = "http://localhost:3000/tasks";
+  const addTask = async (status = "todo") => {
+    try {
+      const res = await fetch(`${API_URL}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: 3,
+          status,
+          text: "Nueva tarea desde frontend",
+        }),
+      });
 
-  const addTask = (status = "todo") => {
-    const newTask = { id: Date.now(), text: "", status };
-    setTodos([...todos, newTask]);
+      if (!res.ok) throw new Error("Error creating task");
+
+      const newTask = await res.json();
+      setTodos((prev) => [...prev, newTask]);
+    } catch (err) {
+      console.error("❌ Error adding task:", err);
+    }
   };
 
   const handleDelete = (id) => setTodos(todos.filter((t) => t.id !== id));
