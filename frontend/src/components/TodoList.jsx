@@ -470,7 +470,7 @@ export default function TodoList({ isAuthenticated = false, user }) {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
 
-      const res = await fetch(`${API_URL}/tasks/${id}`, {
+      const res = await fetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -483,15 +483,31 @@ export default function TodoList({ isAuthenticated = false, user }) {
 
       const updatedTask = await res.json();
 
-      // Actualizamos el estado local
       setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
     } catch (err) {
       console.error("❌ Error editing task:", err);
     }
   };
-  setTodos(todos.map((t) => (t.id === id ? { ...t, text: newText } : t)));
-  const handleStatusChange = (id, newStatus) =>
-    setTodos(todos.map((t) => (t.id === id ? { ...t, status: newStatus } : t)));
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const task = todos.find((t) => t.id === id);
+      if (!task) return;
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: task.text, status: newStatus }),
+      });
+
+      if (!res.ok) throw new Error("Error updating status");
+      const updatedTask = await res.json();
+
+      setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+    } catch (err) {
+      console.error("❌ Error updating status:", err);
+    }
+  };
 
   const filteredTodos = todos.filter((t) =>
     t.text.toLowerCase().includes(search.toLowerCase())

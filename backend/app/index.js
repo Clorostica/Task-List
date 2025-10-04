@@ -124,6 +124,35 @@ app.put("/tasks/:taskId", async (req, res) => {
   }
 });
 
+// PUT - Cambiar el estado de la tarea
+app.put("/tasks/:taskId", async (req, res) => {
+  try {
+    const { taskId } = req.params
+    const { status, text } = req.body;
+    
+    if (!taskId) return res.status(400).json({ error: "taskId is required" });
+    if (!status) return res.status(400).json({ error: "status is required" });
+
+    const tasklist = await pool.query(
+      "SELECT * FROM task_list WHERE id = $1",
+      [taskId]
+    );
+
+    if (tasklist.rows.length === 0) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+    // Crear la tarea
+    const result = await pool.query(
+   "UPDATE task_list SET status = $1, text = $2 WHERE id = $3 RETURNING *",
+      [status, text, taskId]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // GET - Obtener tarea por ID
 app.get("/tasks/:id", async (req, res) => {
