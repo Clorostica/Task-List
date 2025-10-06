@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchBar from "./Search";
 
+const API_URL = "http://localhost:3000";
+
 const stickyColors = [
   "bg-yellow-200 border-yellow-300",
   "bg-pink-200 border-pink-300",
@@ -28,23 +30,10 @@ const useDrag = ({ id, text, status }) => {
   return { isDragging, handleDragStart, handleDragEnd };
 };
 
-TodoItem.propTypes = {
-  id: PropTypes.number.isRequired,
-  text: PropTypes.string.isRequired,
-  status: PropTypes.string.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
-};
-
 function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
-  const [editText, setEditText] = useState(text);
+  const [editText, setEditText] = useState(text || "");
   const [isHovered, setIsHovered] = useState(false);
-  const { handleDragStart, handleDragEnd } = useDrag({
-    id,
-    text,
-    status,
-  });
+  const { handleDragStart, handleDragEnd } = useDrag({ id, text, status });
   const colorClass = stickyColors[id % stickyColors.length];
 
   const handleBlur = () => {
@@ -151,7 +140,6 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
               </svg>
               <span className="hidden sm:inline">To Do</span>
             </span>
-            <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 rounded-full transition-opacity duration-200" />
           </motion.button>
         )}
 
@@ -195,7 +183,6 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
                 </>
               )}
             </span>
-            <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 rounded-full transition-opacity duration-200" />
           </motion.button>
         )}
 
@@ -217,7 +204,6 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
                 clipRule="evenodd"
               />
             </svg>
-            <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 rounded-full transition-opacity duration-200" />
           </motion.button>
         )}
 
@@ -239,15 +225,12 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
               clipRule="evenodd"
             />
           </svg>
-          <div className="absolute inset-0 bg-white opacity-0 group-hover/btn:opacity-20 rounded-full transition-opacity duration-200" />
         </motion.button>
       </motion.div>
 
       <motion.div
         className="absolute bottom-0 right-0 w-4 sm:w-6 h-4 sm:h-6 bg-gray-300 bg-opacity-30"
-        style={{
-          clipPath: "polygon(100% 0, 0 100%, 100% 100%)",
-        }}
+        style={{ clipPath: "polygon(100% 0, 0 100%, 100% 100%)" }}
         animate={{
           scale: isHovered ? 1.2 : 1,
           opacity: isHovered ? 0.4 : 0.2,
@@ -258,14 +241,15 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
   );
 }
 
-Column.propTypes = {
-  title: PropTypes.string.isRequired,
-  tasks: PropTypes.array.isRequired,
+TodoItem.propTypes = {
+  id: PropTypes.number.isRequired,
+  text: PropTypes.string.isRequired,
+  status: PropTypes.string.isRequired,
   onDelete: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onStatusChange: PropTypes.func.isRequired,
-  addTask: PropTypes.func.isRequired,
 };
+
 function Column({
   title,
   tasks,
@@ -305,12 +289,10 @@ function Column({
         className={`${bgColor} ${textColor} p-3 sm:p-4 rounded-t-xl font-bold text-lg sm:text-xl flex items-center justify-between shadow-lg`}
       >
         <span className="text-sm sm:text-xl">{title}</span>
-
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="bg-white bg-opacity-30 px-2 sm:px-3 py-1 rounded-full text-sm sm:text-base font-semibold">
             {tasks.length}
           </span>
-
           <motion.button
             onClick={() => addTask(columnStatus)}
             whileHover={{ scale: 1.1, rotate: 90 }}
@@ -348,12 +330,11 @@ function Column({
               <motion.div
                 key={task.id}
                 layout
-                drag="y"
                 initial={{ opacity: 0.2, y: 0 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0 }}
-                layoutTransition={{ duration: 0 }}
+                animate={{ opacity: 1, y: 0, transition: { duration: 0.1 } }}
+                exit={{ opacity: 0, scale: 0.3 }}
+                transition={{ duration: 0.1 }}
+                layoutTransition={false}
               >
                 <TodoItem
                   id={task.id}
@@ -376,10 +357,7 @@ function Column({
                   ? "text-blue-600 bg-blue-100 bg-opacity-90 scale-110"
                   : "text-amber-400 bg-white bg-opacity-70"
               }`}
-              animate={{
-                scale: isOver ? 1.1 : 1,
-                rotate: isOver ? 2 : 0,
-              }}
+              animate={{ scale: isOver ? 1.1 : 1, rotate: isOver ? 2 : 0 }}
             >
               {isOver ? "🎯 Drop here!" : "Drop your sticky notes here! 📝"}
             </motion.div>
@@ -390,46 +368,50 @@ function Column({
   );
 }
 
-const getStoredTodos = (isAuthenticated, user) => {
-  if (!isAuthenticated || !user?.email) return [];
-
-  // get todos from local stroage, for a specific user.email
-  const stored = localStorage.getItem(`todos_${user.email}`);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch (error) {
-      console.error("Error parsing todos from localStorage:", error);
-      return [];
-    }
-  }
-
-  return [];
+Column.propTypes = {
+  title: PropTypes.string.isRequired,
+  tasks: PropTypes.array.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onStatusChange: PropTypes.func.isRequired,
+  addTask: PropTypes.func.isRequired,
+  bgColor: PropTypes.string,
+  textColor: PropTypes.string,
+  columnStatus: PropTypes.string,
 };
 
-TodoList.propTypes = {
-  isAuthenticated: PropTypes.bool.isRequired,
-  user: PropTypes.any,
-};
 export default function TodoList({ isAuthenticated = false, user }) {
-  const [todos, setTodos] = useState(() =>
-    getStoredTodos(isAuthenticated, user)
-  );
+  const [todos, setTodos] = useState([]);
   const [search, setSearch] = useState("");
-  const saveTodos = (email, todos) => {
-    localStorage.setItem(`todos_${email}`, JSON.stringify(todos));
-  };
 
-  //saves todos for a specific user.
+  // Cargar tareas desde el backend al montar el componente
   useEffect(() => {
-    if (isAuthenticated && user?.email) {
-      saveTodos(user.email, todos);
-    }
-  }, [todos, isAuthenticated, user?.email]);
-  const API_URL = "http://localhost:3000/tasks";
+    const loadTasks = async () => {
+      try {
+        const res = await fetch(`${API_URL}/users/3/tasks`);
+
+        if (!res.ok) throw new Error("Error loading tasks");
+
+        const data = await res.json();
+        setTodos(data.tasks);
+        console.log("✅ Tasks loaded:", data.tasks);
+      } catch (err) {
+        console.error("❌ Error loading tasks:", err);
+      }
+    };
+
+    loadTasks();
+  }, []);
+
+  // Guardar en localStorage
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
+
+  // new task in the backend
   const addTask = async (status = "todo") => {
     try {
-      const res = await fetch(`${API_URL}`, {
+      const res = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -439,18 +421,24 @@ export default function TodoList({ isAuthenticated = false, user }) {
         }),
       });
 
-      if (!res.ok) throw new Error("Error creating task");
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
+      }
 
       const newTask = await res.json();
+      console.log("Task created:", newTask);
+
+      // add a new task
       setTodos((prev) => [...prev, newTask]);
-    } catch (err) {
-      console.error("❌ Error adding task:", err);
+    } catch (error) {
+      console.error("Error creating task:", error);
     }
   };
 
+  // delete task
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "DELETE",
       });
 
@@ -465,12 +453,13 @@ export default function TodoList({ isAuthenticated = false, user }) {
     }
   };
 
+  // edit task
   const handleEdit = async (id, newText) => {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
 
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -482,19 +471,19 @@ export default function TodoList({ isAuthenticated = false, user }) {
       if (!res.ok) throw new Error("Error updating task");
 
       const updatedTask = await res.json();
-
       setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
     } catch (err) {
       console.error("❌ Error editing task:", err);
     }
   };
 
+  // change the status
   const handleStatusChange = async (id, newStatus) => {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
 
-      const res = await fetch(`${API_URL}/${id}`, {
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: task.text, status: newStatus }),
@@ -510,8 +499,9 @@ export default function TodoList({ isAuthenticated = false, user }) {
   };
 
   const filteredTodos = todos.filter((t) =>
-    t.text.toLowerCase().includes(search.toLowerCase())
+    (t.text || "").toLowerCase().includes((search || "").toLowerCase())
   );
+
   const todoTasks = filteredTodos.filter((t) => t.status === "todo");
   const progressTasks = filteredTodos.filter((t) => t.status === "progress");
   const completedTasks = filteredTodos.filter((t) => t.status === "completed");
@@ -558,3 +548,8 @@ export default function TodoList({ isAuthenticated = false, user }) {
     </div>
   );
 }
+
+TodoList.propTypes = {
+  isAuthenticated: PropTypes.bool,
+  user: PropTypes.object,
+};

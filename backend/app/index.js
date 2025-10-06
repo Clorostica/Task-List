@@ -49,11 +49,11 @@ app.get("/users", async (_, res) => { // ← El _ significa "no uso req"
 });
 
 //Obtener usuario específico
-app.get("/users/:id", async (req, res) => {
+app.get("/users/:email", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { email } = req.params;
 
-    let result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+    let result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -71,17 +71,14 @@ app.post("/tasks", async (req, res) => {
   try {
     const { user_id, status, text } = req.body;
     
-    // Validaciones
     if (!user_id) return res.status(400).json({ error: "user_id is required" });
     if (!status) return res.status(400).json({ error: "status is required" });
 
-    // Verificar que el usuario existe
     const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [user_id]);
     if (userCheck.rows.length === 0) {
       return res.status(400).json({ error: "User does not exist" });
     }
 
-    // Crear la tarea
     const result = await pool.query(
       "INSERT INTO task_list(user_id, status, text) VALUES($1, $2, $3) RETURNING *",
       [user_id, status, text]
@@ -111,7 +108,7 @@ app.put("/tasks/:taskId", async (req, res) => {
     if (tasklist.rows.length === 0) {
       return res.status(404).json({ error: "Task not found" });
     }
-    // Crear la tarea
+
     const result = await pool.query(
    "UPDATE task_list SET status = $1, text = $2 WHERE id = $3 RETURNING *",
       [status, text, taskId]
@@ -141,7 +138,7 @@ app.put("/tasks/:taskId", async (req, res) => {
     if (tasklist.rows.length === 0) {
       return res.status(404).json({ error: "Task not found" });
     }
-    // Crear la tarea
+
     const result = await pool.query(
    "UPDATE task_list SET status = $1, text = $2 WHERE id = $3 RETURNING *",
       [status, text, taskId]
@@ -168,7 +165,7 @@ app.get("/tasks/:id", async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Database error" }); //codigo de estado
+    res.status(500).json({ error: "Database error" }); 
   }
 });
 
@@ -200,16 +197,14 @@ app.delete("/tasks/:id", async (req, res) => {
 // GET - Obtener todas las tareas por user_id
 app.get("/users/:userId/tasks", async (req, res) => {
   try {
-    const { userId } = req.params; // con esto extraemoss solo el num y no userid: valor
-    const { status } = req.query; // Filtro opcional por status
+    const { userId } = req.params; 
+    const { status } = req.query; 
 
-    // Verificar que el usuario existe
     const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [userId]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Construir query con filtro opcional
     let query = "SELECT * FROM task_list WHERE user_id = $1";
     let params = [userId];
 
@@ -218,7 +213,7 @@ app.get("/users/:userId/tasks", async (req, res) => {
       params.push(status);
     }
 
-    query += " ORDER BY id DESC"; // Más recientes primero
+    query += " ORDER BY id DESC"; 
 
     const result = await pool.query(query, params);
 
