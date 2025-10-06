@@ -1,6 +1,22 @@
-const express = require("express");
 const { Pool } = require("pg");
-const cors = require("cors");   
+const express = require("express");
+const cors = require("cors"); 
+const { expressjwt } = require("express-jwt");
+const jwksRsa =  require("jwks-rsa");
+const dotenv = require("dotenv")
+dotenv.config();
+
+const checkJwt = expressjwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: process.env.AUTH0_JWKS_URI,
+  }),
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: process.env.AUTH0_ISSUER,
+  algorithms: ["RS256"],
+});
 
 const app = express();
 app.use(express.json());
@@ -18,20 +34,22 @@ app.get("/", (_, res) => {
   res.send("Healthcheck");
 });
 
-app.post("/users", async (req, res) => {
+app.post("/users", checkJwt, async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email is required" }); //Crear usuario
+    console.log(req.auth)
+    const { sub, email } = req.auth;
+  
+    if (!sub || !email) return res.status(400).json({ error: "Invalid token" }); //Crear usuario
 
     const result = await pool.query( 
-      "INSERT INTO users(email) VALUES($1) RETURNING *",
-      [email] // Recibe JSON y extrae solo el email
+      "INSERT INTO users(id, email) VALUES($1, $2) RETURNING *",
+      [sub, email] // Recibe JSON y extrae solo el email
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
     if (err.code === '23505') { //← Código PostgreSQL para "valor duplicado"
-      return res.status(400).json({ error: "Email already exists" }); // Si el email ya existe, devuelve error específico. 
+      return res.status(400).json({ error: "User already exists" }); // Si el email ya existe, devuelve error específico. 
     }
     res.status(500).json({ error: "Database error" });       // Si hay otro error, error genérico
   }
