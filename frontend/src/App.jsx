@@ -5,29 +5,33 @@ import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 
 export default function App() {
-  const { isAuthenticated, isLoading, user } = useAuth0();
-  const API_URL = "http://localhost:3000/users";
+  const { user, getIdTokenClaims, isAuthenticated, isLoading } = useAuth0();
+
+  const API_URL = "http://localhost:3000";
+
   const createUser = async () => {
     try {
-      const checkRes = await fetch(
-        `${API_URL}?email=${encodeURIComponent(user.email)}`
-      );
+      const token = await getIdTokenClaims();
+      if (!token) {
+        return;
+      }
+      const idToken = token.__raw;
+
+      const checkRes = await fetch(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
       const existingUsers = await checkRes.json();
 
-      if (existingUsers.length > 0) {
-        console.log("✅ The user already exists:", existingUsers[0]);
+      if (existingUsers.email) {
+        console.log("✅ The user already exists:", existingUsers.email);
         return;
       }
 
-      const res = await fetch(API_URL, {
+      const res = await fetch(`${API_URL}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.name,
-          picture: user.picture,
-          sub: user.sub,
-        }),
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
       });
 
       if (!res.ok) throw new Error("Error creating/");

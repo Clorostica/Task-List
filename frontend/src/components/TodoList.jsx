@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import SearchBar from "./Search";
 import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
-import SearchBar from "./Search";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const API_URL = "http://localhost:3000";
 
@@ -380,16 +381,30 @@ Column.propTypes = {
   columnStatus: PropTypes.string,
 };
 
-export default function TodoList({ isAuthenticated = false, user }) {
+export default function TodoList() {
+  const [token, setToken] = useState();
   const [todos, setTodos] = useState([]);
   const [search, setSearch] = useState("");
+  const {
+    getIdTokenClaims,
+    user: authUser,
+    isAuthenticated: authIsAuthenticated,
+  } = useAuth0();
 
   // Cargar tareas desde el backend al montar el componente
   useEffect(() => {
     const loadTasks = async () => {
       try {
-        const res = await fetch(`${API_URL}/users/3/tasks`);
+        const token = await getIdTokenClaims();
+        if (!token) return;
+        const idToken = token.__raw;
+        setToken(idToken);
 
+        const res = await fetch(`${API_URL}/tasks`, {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
         if (!res.ok) throw new Error("Error loading tasks");
 
         const data = await res.json();
@@ -413,9 +428,10 @@ export default function TodoList({ isAuthenticated = false, user }) {
     try {
       const res = await fetch(`${API_URL}/tasks`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          user_id: 3,
           status,
           text: "",
         }),
@@ -440,6 +456,9 @@ export default function TodoList({ isAuthenticated = false, user }) {
     try {
       const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!res.ok) throw new Error("Error deleting task");
@@ -461,7 +480,9 @@ export default function TodoList({ isAuthenticated = false, user }) {
 
       const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           text: newText,
           status: task.status,
@@ -482,11 +503,17 @@ export default function TodoList({ isAuthenticated = false, user }) {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
+      const token = await getAccessTokenSilently();
 
       const res = await fetch(`${API_URL}/tasks/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: task.text, status: newStatus }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: task.text,
+          status: newStatus,
+        }),
       });
 
       if (!res.ok) throw new Error("Error updating status");
