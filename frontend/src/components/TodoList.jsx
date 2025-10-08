@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import SearchBar from "./Search";
-import PropTypes from "prop-types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth0 } from "@auth0/auth0-react";
 
@@ -106,7 +105,7 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder="Write your task..."
-        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-3 sm:mt-4 relative z-10 text-sm sm:text-base"
+        className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-6 sm:mt-8 relative z-10 text-sm sm:text-base"
         rows="2"
       />
 
@@ -242,15 +241,6 @@ function TodoItem({ id, text, status, onDelete, onEdit, onStatusChange }) {
   );
 }
 
-TodoItem.propTypes = {
-  id: PropTypes.number.isRequired,
-  text: PropTypes.string.isRequired,
-  status: PropTypes.string.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
-};
-
 function Column({
   title,
   tasks,
@@ -275,6 +265,7 @@ function Column({
   const handleDrop = (e) => {
     e.preventDefault();
     setIsOver(false);
+
     try {
       const taskData = JSON.parse(e.dataTransfer.getData("text/plain"));
       if (taskData.status !== columnStatus)
@@ -369,18 +360,6 @@ function Column({
   );
 }
 
-Column.propTypes = {
-  title: PropTypes.string.isRequired,
-  tasks: PropTypes.array.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onStatusChange: PropTypes.func.isRequired,
-  addTask: PropTypes.func.isRequired,
-  bgColor: PropTypes.string,
-  textColor: PropTypes.string,
-  columnStatus: PropTypes.string,
-};
-
 export default function TodoList() {
   const [token, setToken] = useState();
   const [todos, setTodos] = useState([]);
@@ -390,136 +369,221 @@ export default function TodoList() {
     user: authUser,
     isAuthenticated: authIsAuthenticated,
   } = useAuth0();
+  const STORAGE_KEY = "nouser_tasks";
 
-  // Cargar tareas desde el backend al montar el componente
+  // to get the task from localStorage
+  const getLocalTasks = () => {
+    try {
+      const tasks = localStorage.getItem(STORAGE_KEY);
+      return tasks ? JSON.parse(tasks) : [];
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+      return [];
+    }
+  };
+
+  // to save the task from localStorage
+  const saveLocalTasks = (tasks) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+    }
+  };
+
   useEffect(() => {
     const loadTasks = async () => {
       try {
         const token = await getIdTokenClaims();
-        if (!token) return;
-        const idToken = token.__raw;
-        setToken(idToken);
 
-        const res = await fetch(`${API_URL}/tasks`, {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
-        if (!res.ok) throw new Error("Error loading tasks");
+        if (token) {
+          const idToken = token.__raw;
+          setToken(idToken);
 
-        const data = await res.json();
-        setTodos(data.tasks);
-        console.log("✅ Tasks loaded:", data.tasks);
+          const res = await fetch(`${API_URL}/tasks`, {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+            },
+          });
+
+          if (!res.ok) throw new Error("Error loading tasks");
+
+          const data = await res.json();
+          setTodos(data.tasks);
+          console.log("✅ Tasks loaded from API:", data.tasks);
+        } else {
+          setToken(null);
+          const localTasks = getLocalTasks();
+          setTodos(localTasks);
+          console.log("✅ Tasks loaded from localStorage:", localTasks);
+        }
       } catch (err) {
         console.error("❌ Error loading tasks:", err);
       }
     };
 
     loadTasks();
-  }, []);
-
-  // Guardar en localStorage
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
+  }, [token]);
 
   // new task in the backend
   const addTask = async (status = "todo") => {
-    try {
-      const res = await fetch(`${API_URL}/tasks`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+    if (token) {
+      try {
+        const res = await fetch(`${API_URL}/tasks`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status,
+            text: "",
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Error: ${res.status}`);
+        }
+
+        const newTask = await res.json();
+        console.log("Task created:", newTask);
+
+        setTodos((prev) => [...prev, newTask]);
+      } catch (error) {
+        console.error("Error creating task:", error);
+      }
+    } else {
+      // new task in localstorage
+      try {
+        const newTask = {
+          id: Date.now().toString(),
           status,
           text: "",
-        }),
-      });
+          createdAt: new Date().toISOString(),
+        };
 
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
+        console.log("Task created locally:", newTask);
+
+        const existingTasks = getLocalTasks();
+
+        const updatedTasks = [...existingTasks, newTask];
+
+        saveLocalTasks(updatedTasks);
+
+        setTodos((prev) => [...prev, newTask]);
+      } catch (error) {
+        console.error("Error creating local task:", error);
       }
-
-      const newTask = await res.json();
-      console.log("Task created:", newTask);
-
-      // add a new task
-      setTodos((prev) => [...prev, newTask]);
-    } catch (error) {
-      console.error("Error creating task:", error);
     }
   };
+  // Delete task
+  const deleteTask = async (taskId) => {
+    if (token) {
+      try {
+        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  // delete task
-  const handleDelete = async (id) => {
-    try {
-      const res = await fetch(`${API_URL}/tasks/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        if (!res.ok) {
+          throw new Error(`Error: ${res.status}`);
+        }
 
-      if (!res.ok) throw new Error("Error deleting task");
+        setTodos((prev) => prev.filter((task) => task.id !== taskId));
+      } catch (error) {
+        console.error("Error deleting task:", error);
+      }
+    } else {
+      try {
+        const tasks = getLocalTasks();
+        const updatedTasks = tasks.filter((task) => task.id !== taskId);
 
-      const data = await res.json();
-      console.log(data);
-
-      setTodos((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      console.error("❌ Error deleting task:", err);
+        saveLocalTasks(updatedTasks);
+        setTodos((prev) => prev.filter((task) => task.id !== taskId));
+      } catch (error) {
+        console.error("Error deleting local task:", error);
+      }
     }
   };
-
-  // edit task
+  // Editar task
   const handleEdit = async (id, newText) => {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
+      if (token) {
+        const res = await fetch(`${API_URL}/tasks/${id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: newText,
+            status: task.status,
+          }),
+        });
 
-      const res = await fetch(`${API_URL}/tasks/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          text: newText,
-          status: task.status,
-        }),
-      });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Error updating task: ${res.status} - ${errText}`);
+        }
 
-      if (!res.ok) throw new Error("Error updating task");
+        const updatedTask = await res.json();
+        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        console.log("✅ Task updated in API:", updatedTask);
+      } else {
+        const updatedTask = { ...task, text: newText };
 
-      const updatedTask = await res.json();
-      setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        const localTasks = getLocalTasks();
+        const updatedTasks = localTasks.map((t) =>
+          t.id === id ? updatedTask : t
+        );
+        saveLocalTasks(updatedTasks);
+
+        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        console.log("✅ Task updated in localStorage:", updatedTask);
+      }
     } catch (err) {
       console.error("❌ Error editing task:", err);
     }
   };
 
-  // change the status
   const handleStatusChange = async (id, newStatus) => {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
-      const token = await getAccessTokenSilently();
 
-      const res = await fetch(`${API_URL}/tasks/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          text: task.text,
-          status: newStatus,
-        }),
-      });
+      if (token) {
+        const res = await fetch(`${API_URL}/tasks/${id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: task.text,
+            status: newStatus,
+          }),
+        });
 
-      if (!res.ok) throw new Error("Error updating status");
-      const updatedTask = await res.json();
+        if (!res.ok) throw new Error("Error updating status");
+        const updatedTask = await res.json();
 
-      setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        console.log("✅ Status updated in API:", updatedTask);
+      } else {
+        const updatedTask = { ...task, status: newStatus };
+        const localTasks = getLocalTasks();
+        const updatedTasks = localTasks.map((t) =>
+          t.id === id ? updatedTask : t
+        );
+        saveLocalTasks(updatedTasks);
+
+        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+        console.log("✅ Status updated in localStorage:", updatedTask);
+      }
     } catch (err) {
       console.error("❌ Error updating status:", err);
     }
@@ -541,7 +605,7 @@ export default function TodoList() {
         <Column
           title="📝 To Do"
           tasks={todoTasks}
-          onDelete={handleDelete}
+          onDelete={deleteTask}
           onEdit={handleEdit}
           onStatusChange={handleStatusChange}
           bgColor="bg-gradient-to-r from-slate-600 to-slate-700"
@@ -552,7 +616,7 @@ export default function TodoList() {
         <Column
           title="🚀 In Progress"
           tasks={progressTasks}
-          onDelete={handleDelete}
+          onDelete={deleteTask}
           onEdit={handleEdit}
           onStatusChange={handleStatusChange}
           bgColor="bg-gradient-to-r from-yellow-500 to-yellow-600"
@@ -563,7 +627,7 @@ export default function TodoList() {
         <Column
           title="✅ Completed"
           tasks={completedTasks}
-          onDelete={handleDelete}
+          onDelete={deleteTask}
           onEdit={handleEdit}
           onStatusChange={handleStatusChange}
           bgColor="bg-gradient-to-r from-green-500 to-green-600"
@@ -575,8 +639,3 @@ export default function TodoList() {
     </div>
   );
 }
-
-TodoList.propTypes = {
-  isAuthenticated: PropTypes.bool,
-  user: PropTypes.object,
-};
