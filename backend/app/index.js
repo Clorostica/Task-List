@@ -81,7 +81,7 @@ app.post("/tasks", checkJwt, async (req, res) => {
   try {
     const { sub } = req.auth;
     const userId = sub;
-    const { status, text } = req.body;
+    const { status, text, colorClass } = req.body;
 
     if (!userId || !status) {
       return res.status(400).json({
@@ -96,8 +96,8 @@ app.post("/tasks", checkJwt, async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO task_list(user_id, status, text) VALUES($1, $2, $3) RETURNING *",
-      [userId, status, text]
+      "INSERT INTO task_list(user_id, status, text, color_class) VALUES($1, $2, $3, $4) RETURNING *",
+      [userId, status, text, colorClass]
     );
 
     res.status(201).json(result.rows[0]);

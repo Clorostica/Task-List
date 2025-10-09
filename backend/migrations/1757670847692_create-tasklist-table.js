@@ -1,25 +1,28 @@
 exports.up = (pgm) => {
-  pgm.createTable('task_list', {
+  pgm.createTable("task_list", {
     id: {
-        type: 'serial',
-        primaryKey: true
+      type: "serial",
+      primaryKey: true,
     },
     user_id: {
-      type: 'text',
+      type: "text",
       notNull: true,
-      references: 'users',
-      onDelete: 'cascade',
+      references: "users",
+      onDelete: "cascade",
     },
     status: {
-        type: 'text',
-        notNull: true,
+      type: "text",
+      notNull: true,
     },
     text: {
-        type: 'text'
-    }
+      type: "text",
+    },
+    color_class: {
+      type: "text",
+    },
   });
 };
 
 exports.down = (pgm) => {
-    pgm.dropTable('task_list');
+  pgm.dropTable("task_list");
 };

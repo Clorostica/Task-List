@@ -9,6 +9,7 @@
   "dependencies": {
     "@auth0/auth0-react": "^2.4.0",
     "framer-motion": "^12.11.3",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.510.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

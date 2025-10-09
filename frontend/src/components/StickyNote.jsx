@@ -1,15 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { motion } from "framer-motion";
 
-function StickyNote({
-  id,
-  text,
-  status,
-  onEdit,
-  onStatusChange,
-  onDelete,
-  colorClass,
-}) {
+const StickyNote = forwardRef(function StickyNote(
+  { id, text, status, onEdit, onStatusChange, onDelete, colorClass },
+  ref
+) {
   const [editText, setEditText] = useState(text || "");
   const [isHovered, setIsHovered] = useState(false);
 
@@ -61,7 +56,7 @@ function StickyNote({
         type: "spring",
         stiffness: 300,
         damping: 20,
-        duration: 0.3,
+        duration: 0,
       }}
       className={`group ${colorClass} p-3 sm:p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 cursor-grab relative overflow-hidden`}
       draggable
@@ -76,14 +71,14 @@ function StickyNote({
           rotate: isHovered ? 8 : 12,
           scale: isHovered ? 1.1 : 1,
         }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.1 }}
       />
 
       <motion.div
         className="absolute inset-0 bg-white rounded-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 0.1 : 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.1 }}
       />
 
       <textarea
@@ -222,10 +217,9 @@ function StickyNote({
           scale: isHovered ? 1.2 : 1,
           opacity: isHovered ? 0.4 : 0.2,
         }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0 }}
       />
     </motion.div>
   );
-}
-
+});
 export default StickyNote;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import SearchBar from "./Search";
 import { useAuth0 } from "@auth0/auth0-react";
 import Column from "./Column";
+import _ from "lodash";
 
 const API_URL = "http://localhost:3000";
 
@@ -30,9 +31,6 @@ export default function TodoList() {
   // to save the task from localStorage
   const saveLocalTasks = (tasks) => {
     try {
-      console.log("saveLocalTasksx");
-      console.log(tasks);
-      console.log(JSON.stringify(tasks));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
     } catch (error) {
       console.error("Error saving to localStorage:", error);
@@ -57,8 +55,13 @@ export default function TodoList() {
           if (!res.ok) throw new Error("Error loading tasks");
 
           const data = await res.json();
-          setTodos(data.tasks);
-          console.log("✅ Tasks loaded from API:", data.tasks);
+
+          const tasks = data.tasks.map((task) =>
+            _.mapKeys(task, (value, key) => _.camelCase(key))
+          );
+
+          setTodos(tasks);
+          console.log("✅ Tasks loaded from API:", tasks);
         } else {
           setToken(null);
           const localTasks = getLocalTasks();
@@ -74,7 +77,24 @@ export default function TodoList() {
   }, [token]);
 
   // new task in the backend
+
   const addTask = async (status = "todo") => {
+    function getColorClass() {
+      const colors = [
+        "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-400",
+        "bg-gradient-to-br from-green-100 to-green-200 border-green-400",
+        "bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400",
+        "bg-gradient-to-br from-pink-100 to-pink-200 border-pink-400",
+        "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-400",
+        "bg-gradient-to-br from-indigo-100 to-indigo-200 border-indigo-400",
+        "bg-gradient-to-br from-red-100 to-red-200 border-red-400",
+        "bg-gradient-to-br from-orange-100 to-orange-200 border-orange-400",
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    const colorClass = getColorClass();
+
     if (token) {
       try {
         const res = await fetch(`${API_URL}/tasks`, {
@@ -86,14 +106,16 @@ export default function TodoList() {
           body: JSON.stringify({
             status,
             text: "",
+            colorClass,
           }),
         });
 
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
         }
-
-        const newTask = await res.json();
+        console.log("Color generado:", colorClass);
+        const resTask = await res.json();
+        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
         console.log("Task created:", newTask);
 
         setTodos((prev) => [...prev, newTask]);
@@ -108,6 +130,7 @@ export default function TodoList() {
           status,
           text: "",
           createdAt: new Date().toISOString(),
+          colorClass,
         };
 
         console.log("Task created locally:", newTask);
@@ -115,9 +138,6 @@ export default function TodoList() {
         const existingTasks = getLocalTasks();
 
         const updatedTasks = [...existingTasks, newTask];
-
-        console.log("updatedTasks");
-        console.log(updatedTasks);
 
         saveLocalTasks(updatedTasks);
 
@@ -182,9 +202,11 @@ export default function TodoList() {
           throw new Error(`Error updating task: ${res.status} - ${errText}`);
         }
 
-        const updatedTask = await res.json();
-        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
-        console.log("✅ Task updated in API:", updatedTask);
+        const resTask = await res.json();
+        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
+
+        setTodos((prev) => prev.map((t) => (t.id === id ? newTask : t)));
+        console.log("✅ Task updated in API:", newTask);
       } else {
         const updatedTask = { ...task, text: newText };
 
@@ -221,10 +243,12 @@ export default function TodoList() {
         });
 
         if (!res.ok) throw new Error("Error updating status");
-        const updatedTask = await res.json();
 
-        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
-        console.log("✅ Status updated in API:", updatedTask);
+        const resTask = await res.json();
+        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
+
+        setTodos((prev) => prev.map((t) => (t.id === id ? newTask : t)));
+        console.log("✅ Status updated in API:", newTask);
       } else {
         const updatedTask = { ...task, status: newStatus };
         const localTasks = getLocalTasks();

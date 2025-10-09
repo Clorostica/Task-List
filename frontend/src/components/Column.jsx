@@ -2,20 +2,6 @@ import React, { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import StickyNote from "./StickyNote";
 
-function getColorClass() {
-  const colors = [
-    "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-400",
-    "bg-gradient-to-br from-green-100 to-green-200 border-green-400",
-    "bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400",
-    "bg-gradient-to-br from-pink-100 to-pink-200 border-pink-400",
-    "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-400",
-    "bg-gradient-to-br from-indigo-100 to-indigo-200 border-indigo-400",
-    "bg-gradient-to-br from-red-100 to-red-200 border-red-400",
-    "bg-gradient-to-br from-orange-100 to-orange-200 border-orange-400",
-  ];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-
 const Column = forwardRef(function Column(
   {
     title,
@@ -98,7 +84,7 @@ const Column = forwardRef(function Column(
       </div>
 
       <div
-        className="p-4 rounded-b-xl shadow-lg min-h-[400px] space-y-4"
+        className="p-4 rounded-b-xl shadow-lg min-h-[400px] space-y-4 "
         style={{
           backgroundImage: `radial-gradient(circle at 25% 25%, rgb(212, 197, 169) 2px, transparent 2px),
                             radial-gradient(circle at 75% 25%, rgb(212, 197, 169) 2px, transparent 2px),
@@ -108,16 +94,17 @@ const Column = forwardRef(function Column(
         }}
       >
         <AnimatePresence mode="popLayout">
-          {tasks.map((task) => (
+          {tasks?.map((task) => (
             <StickyNote
               key={task.id}
+              task={task}
               id={task.id}
               text={task.text}
               status={task.status}
               onEdit={onEdit}
               onStatusChange={onStatusChange}
               onDelete={() => onDelete(task.id)}
-              colorClass={getColorClass(columnStatus)}
+              colorClass={task.colorClass}
             />
           ))}
         </AnimatePresence>
