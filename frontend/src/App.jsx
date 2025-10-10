@@ -13,7 +13,8 @@ export default function App() {
   const [token, setToken] = useState(null);
 
   const STORAGE_KEY = "nouser_tasks";
-  const API_URL = "http://localhost:3000";
+
+  const API_URL = import.meta.env.VITE_API;
 
   const getLocalTasks = () => {
     try {

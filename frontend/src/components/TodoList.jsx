@@ -2,7 +2,7 @@ import React from "react";
 import Column from "./Column";
 import _ from "lodash";
 
-const API_URL = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API;
 
 export default function TodoList({
   todos,
