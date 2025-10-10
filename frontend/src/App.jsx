@@ -1,21 +1,38 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import TodoList from "./components/TodoList";
+import Search from "./components/Search";
 
 export default function App() {
   const { user, getIdTokenClaims, isAuthenticated, isLoading } = useAuth0();
 
+  const [todos, setTodos] = useState([]);
+  const [search, setSearch] = useState("");
+  const [token, setToken] = useState(null);
+
+  const STORAGE_KEY = "nouser_tasks";
   const API_URL = "http://localhost:3000";
+
+  const getLocalTasks = () => {
+    try {
+      const tasks = localStorage.getItem(STORAGE_KEY);
+      return tasks ? JSON.parse(tasks) : [];
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+      return [];
+    }
+  };
 
   const createUser = async () => {
     try {
-      const token = await getIdTokenClaims();
-      if (!token) {
+      const tokenClaims = await getIdTokenClaims();
+      if (!tokenClaims) {
         return;
       }
-      const idToken = token.__raw;
+      const idToken = tokenClaims.__raw;
+      setToken(idToken);
 
       const checkRes = await fetch(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${idToken}` },
@@ -34,7 +51,7 @@ export default function App() {
         },
       });
 
-      if (!res.ok) throw new Error("Error creating/");
+      if (!res.ok) throw new Error("Error creating user");
 
       const newUser = await res.json();
       console.log("🆕 user created", newUser);
@@ -42,35 +59,87 @@ export default function App() {
       console.error("❌ Error creating/verifying user", err);
     }
   };
+
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        if (isAuthenticated && user) {
+          const tokenClaims = await getIdTokenClaims();
+          if (tokenClaims) {
+            const idToken = tokenClaims.__raw;
+            setToken(idToken);
+
+            const res = await fetch(`${API_URL}/tasks`, {
+              headers: {
+                Authorization: `Bearer ${idToken}`,
+              },
+            });
+
+            if (!res.ok) throw new Error("Error loading tasks");
+
+            const data = await res.json();
+            const tasks = data.tasks.map((task) =>
+              Object.fromEntries(
+                Object.entries(task).map(([key, value]) => [
+                  key.replace(/_([a-z])/g, (g) => g[1].toUpperCase()),
+                  value,
+                ])
+              )
+            );
+
+            setTodos(tasks);
+            console.log("✅ Tasks loaded from API:", tasks);
+          }
+        } else if (!isLoading) {
+          setToken(null);
+          const localTasks = getLocalTasks();
+          setTodos(localTasks);
+          console.log("✅ Tasks loaded from localStorage:", localTasks);
+        }
+      } catch (err) {
+        console.error("❌ Error loading tasks:", err);
+      }
+    };
+
+    loadTasks();
+  }, [isAuthenticated, isLoading, user, getIdTokenClaims]);
+
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       createUser();
     }
     console.log(user);
-  }, [isAuthenticated, isLoading, user]);
+  }, [isAuthenticated, isLoading, user, getIdTokenClaims]);
 
   if (isLoading) {
     return <div className="text-center mt-12">Loading...</div>;
   }
+
   return (
     <div className="p-2 sm:p-4 bg-gradient-to-br from-orange-100 via-yellow-50 to-amber-100 min-h-screen">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
-        <div className="hidden sm:block w-[200px]"></div>
-
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-4 sm:px-6 py-6 sm:py-8">
         <h1
-          className="text-2xl sm:text-4xl font-bold text-gray-800 text-center drop-shadow-lg px-2"
+          className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 drop-shadow-md flex-1 text-center sm:text-left"
           style={{ fontFamily: "Comic Sans MS, cursive" }}
         >
-          🖇️ My Sticky Note Board
+          🖇️ Sticky Note Board
         </h1>
-
-        <div className="flex justify-center sm:justify-end">
+        <div className="w-full sm:flex-1 sm:px-4">
+          <Search search={search} setSearch={setSearch} />
+        </div>
+        <div className="w-full sm:w-auto sm:flex-1 flex justify-center sm:justify-end">
           <Header isAuthenticated={isAuthenticated} />
         </div>
       </div>
 
-      <div className="max-w-full mx-auto px-1 sm:px-0">
-        <TodoList isAuthenticated={isAuthenticated} user={user} />
+      <div className="max-w-full mx-auto px-2 sm:px-4">
+        <TodoList
+          isAuthenticated={isAuthenticated}
+          todos={todos}
+          setTodos={setTodos}
+          search={search}
+          token={token}
+        />
       </div>
     </div>
   );

@@ -7,16 +7,7 @@ const StickyNote = forwardRef(function StickyNote(
 ) {
   const [editText, setEditText] = useState(text || "");
   const [isHovered, setIsHovered] = useState(false);
-
-  const handleDragStart = (e) => {
-    const taskData = { id, text, status };
-    e.dataTransfer.setData("text/plain", JSON.stringify(taskData));
-    e.dataTransfer.effectAllowed = "move";
-  };
-
-  const handleDragEnd = (e) => {
-    e.dataTransfer.clearData();
-  };
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleBlur = () => {
     if (editText.trim() && editText !== text) {
@@ -33,13 +24,30 @@ const StickyNote = forwardRef(function StickyNote(
     }
   };
 
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    const taskData = { id, text: editText, status };
+    e.dataTransfer.setData("application/json", JSON.stringify(taskData));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleButtonClick = (callback) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    callback();
+  };
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
       animate={{
         opacity: 1,
-        scale: isHovered ? 1.08 : 1,
+        scale: isDragging ? 0.95 : isHovered ? 1.08 : 1,
         rotate: isHovered ? 0 : Math.random() * 6 - 3,
         y: isHovered ? -8 : 0,
       }}
@@ -58,15 +66,16 @@ const StickyNote = forwardRef(function StickyNote(
         damping: 20,
         duration: 0,
       }}
-      className={`group ${colorClass} p-3 sm:p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 cursor-grab relative overflow-hidden`}
+      className={`group ${colorClass} p-3 sm:p-4 rounded-lg shadow-lg border-l-4 transition-all duration-300 cursor-grab active:cursor-grabbing relative overflow-hidden`}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      ref={ref}
     >
       <motion.div
-        className="absolute -top-2 left-1/4 w-8 sm:w-12 h-4 sm:h-6 bg-white bg-opacity-70 rotate-12 shadow-sm"
+        className="absolute -top-2 left-1/4 w-8 sm:w-12 h-4 sm:h-6 bg-white bg-opacity-70 rotate-12 shadow-sm pointer-events-none"
         animate={{
           rotate: isHovered ? 8 : 12,
           scale: isHovered ? 1.1 : 1,
@@ -75,7 +84,7 @@ const StickyNote = forwardRef(function StickyNote(
       />
 
       <motion.div
-        className="absolute inset-0 bg-white rounded-lg"
+        className="absolute inset-0 bg-white rounded-lg pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{ opacity: isHovered ? 0.1 : 0 }}
         transition={{ duration: 0.1 }}
@@ -86,6 +95,7 @@ const StickyNote = forwardRef(function StickyNote(
         onChange={(e) => setEditText(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
+        onDragStart={(e) => e.stopPropagation()}
         placeholder="Write your task..."
         className="w-full bg-transparent resize-none focus:outline-none text-gray-800 font-medium mt-6 sm:mt-8 relative z-10 text-sm sm:text-base"
         rows="2"
@@ -103,7 +113,7 @@ const StickyNote = forwardRef(function StickyNote(
       >
         {status !== "todo" && (
           <motion.button
-            onClick={() => onStatusChange(id, "todo")}
+            onClick={handleButtonClick(() => onStatusChange(id, "todo"))}
             whileHover={{ scale: 1.1, rotate: -2 }}
             whileTap={{ scale: 0.95 }}
             className="group/btn relative px-1 sm:px-2 py-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
@@ -127,7 +137,7 @@ const StickyNote = forwardRef(function StickyNote(
 
         {status !== "progress" && (
           <motion.button
-            onClick={() => onStatusChange(id, "progress")}
+            onClick={handleButtonClick(() => onStatusChange(id, "progress"))}
             whileHover={{ scale: 1.1, rotate: 2 }}
             whileTap={{ scale: 0.95 }}
             className="group/btn relative px-1 sm:px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
@@ -170,10 +180,10 @@ const StickyNote = forwardRef(function StickyNote(
 
         {status !== "completed" && (
           <motion.button
-            onClick={() => onStatusChange(id, "completed")}
+            onClick={handleButtonClick(() => onStatusChange(id, "completed"))}
             whileHover={{ scale: 1.1, rotate: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="group/btn relative w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
+            className="group/btn relative px-1 sm:px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 rounded-full text-white text-xs font-medium shadow-lg transition-all duration-200"
           >
             <svg
               className="w-3 sm:w-4 h-3 sm:h-4 relative z-10"
@@ -190,7 +200,7 @@ const StickyNote = forwardRef(function StickyNote(
         )}
 
         <motion.button
-          onClick={onDelete}
+          onClick={handleButtonClick(onDelete)}
           whileHover={{ scale: 1.1, rotate: 3 }}
           whileTap={{ scale: 0.95 }}
           className="group/btn relative w-6 sm:w-8 h-6 sm:h-8 bg-gradient-to-r from-red-400 to-red-500 hover:from-red-500 hover:to-red-600 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200"
@@ -211,7 +221,7 @@ const StickyNote = forwardRef(function StickyNote(
       </motion.div>
 
       <motion.div
-        className="absolute bottom-0 right-0 w-4 sm:w-6 h-4 sm:h-6 bg-gray-300 bg-opacity-30"
+        className="absolute bottom-0 right-0 w-4 sm:w-6 h-4 sm:h-6 bg-gray-300 bg-opacity-30 pointer-events-none"
         style={{ clipPath: "polygon(100% 0, 0 100%, 100% 100%)" }}
         animate={{
           scale: isHovered ? 1.2 : 1,
@@ -222,4 +232,5 @@ const StickyNote = forwardRef(function StickyNote(
     </motion.div>
   );
 });
+
 export default StickyNote;

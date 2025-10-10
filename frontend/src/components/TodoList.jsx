@@ -1,23 +1,36 @@
-import React, { useState, useEffect } from "react";
-import SearchBar from "./Search";
-import { useAuth0 } from "@auth0/auth0-react";
+import React from "react";
 import Column from "./Column";
 import _ from "lodash";
 
 const API_URL = "http://localhost:3000";
 
-export default function TodoList() {
-  const [token, setToken] = useState();
-  const [todos, setTodos] = useState([]);
-  const [search, setSearch] = useState("");
-  const {
-    getIdTokenClaims,
-    user: authUser,
-    isAuthenticated: authIsAuthenticated,
-  } = useAuth0();
+export default function TodoList({
+  todos,
+  setTodos,
+  search,
+  token,
+  isAuthenticated,
+}) {
   const STORAGE_KEY = "nouser_tasks";
 
-  // to get the task from localStorage
+  function getColorClass() {
+    const colors = [
+      "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-400",
+      "bg-gradient-to-br from-green-100 to-green-200 border-green-400",
+      "bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400",
+      "bg-gradient-to-br from-pink-100 to-pink-200 border-pink-400",
+      "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-400",
+      "bg-gradient-to-br from-indigo-100 to-indigo-200 border-indigo-400",
+      "bg-gradient-to-br from-red-100 to-red-200 border-red-400",
+      "bg-gradient-to-br from-orange-100 to-orange-200 border-orange-400",
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+  const colorClass = getColorClass();
+  const filteredTodos = todos.filter((t) =>
+    (t.text || "").toLowerCase().includes((search || "").toLowerCase())
+  );
+
   const getLocalTasks = () => {
     try {
       const tasks = localStorage.getItem(STORAGE_KEY);
@@ -27,8 +40,6 @@ export default function TodoList() {
       return [];
     }
   };
-
-  // to save the task from localStorage
   const saveLocalTasks = (tasks) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -37,65 +48,12 @@ export default function TodoList() {
     }
   };
 
-  useEffect(() => {
-    const loadTasks = async () => {
-      try {
-        const token = await getIdTokenClaims();
-
-        if (token) {
-          const idToken = token.__raw;
-          setToken(idToken);
-
-          const res = await fetch(`${API_URL}/tasks`, {
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-            },
-          });
-
-          if (!res.ok) throw new Error("Error loading tasks");
-
-          const data = await res.json();
-
-          const tasks = data.tasks.map((task) =>
-            _.mapKeys(task, (value, key) => _.camelCase(key))
-          );
-
-          setTodos(tasks);
-          console.log("✅ Tasks loaded from API:", tasks);
-        } else {
-          setToken(null);
-          const localTasks = getLocalTasks();
-          setTodos(localTasks);
-          console.log("✅ Tasks loaded from localStorage:", localTasks);
-        }
-      } catch (err) {
-        console.error("❌ Error loading tasks:", err);
-      }
-    };
-
-    loadTasks();
-  }, [token]);
-
-  // new task in the backend
+  const todoTasks = filteredTodos.filter((t) => t.status === "todo");
+  const progressTasks = filteredTodos.filter((t) => t.status === "progress");
+  const completedTasks = filteredTodos.filter((t) => t.status === "completed");
 
   const addTask = async (status = "todo") => {
-    function getColorClass() {
-      const colors = [
-        "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-400",
-        "bg-gradient-to-br from-green-100 to-green-200 border-green-400",
-        "bg-gradient-to-br from-yellow-100 to-yellow-200 border-yellow-400",
-        "bg-gradient-to-br from-pink-100 to-pink-200 border-pink-400",
-        "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-400",
-        "bg-gradient-to-br from-indigo-100 to-indigo-200 border-indigo-400",
-        "bg-gradient-to-br from-red-100 to-red-200 border-red-400",
-        "bg-gradient-to-br from-orange-100 to-orange-200 border-orange-400",
-      ];
-      return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    const colorClass = getColorClass();
-
-    if (token) {
+    if (token && isAuthenticated) {
       try {
         const res = await fetch(`${API_URL}/tasks`, {
           method: "POST",
@@ -113,7 +71,7 @@ export default function TodoList() {
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
         }
-        console.log("Color generado:", colorClass);
+
         const resTask = await res.json();
         const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
         console.log("Task created:", newTask);
@@ -123,7 +81,6 @@ export default function TodoList() {
         console.error("Error creating task:", error);
       }
     } else {
-      // new task in localstorage
       try {
         const newTask = {
           id: Date.now().toString(),
@@ -136,11 +93,9 @@ export default function TodoList() {
         console.log("Task created locally:", newTask);
 
         const existingTasks = getLocalTasks();
-
         const updatedTasks = [...existingTasks, newTask];
 
         saveLocalTasks(updatedTasks);
-
         setTodos((prev) => [...prev, newTask]);
       } catch (error) {
         console.error("Error creating local task:", error);
@@ -148,9 +103,9 @@ export default function TodoList() {
     }
   };
 
-  // Delete task
+  // Eliminar tarea
   const deleteTask = async (taskId) => {
-    if (token) {
+    if (token && isAuthenticated) {
       try {
         const res = await fetch(`${API_URL}/tasks/${taskId}`, {
           method: "DELETE",
@@ -179,12 +134,14 @@ export default function TodoList() {
       }
     }
   };
-  // Editar task
+
+  // Editar tarea
   const handleEdit = async (id, newText) => {
     try {
       const task = todos.find((t) => t.id === id);
       if (!task) return;
-      if (token) {
+
+      if (token && isAuthenticated) {
         const res = await fetch(`${API_URL}/tasks/${id}`, {
           method: "PUT",
           headers: {
@@ -224,13 +181,16 @@ export default function TodoList() {
     }
   };
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (taskId, newStatus, position = null) => {
     try {
-      const task = todos.find((t) => t.id === id);
-      if (!task) return;
+      const task = todos.find((t) => t.id === taskId);
+      if (!task) {
+        console.error("Task not found:", taskId);
+        return;
+      }
 
-      if (token) {
-        const res = await fetch(`${API_URL}/tasks/${id}`, {
+      if (token && isAuthenticated) {
+        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -242,76 +202,80 @@ export default function TodoList() {
           }),
         });
 
-        if (!res.ok) throw new Error("Error updating status");
+        if (!res.ok) throw new Error(`Error: ${res.status}`);
 
         const resTask = await res.json();
-        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
+        const updatedTask = _.mapKeys(resTask, (value, key) =>
+          _.camelCase(key)
+        );
 
-        setTodos((prev) => prev.map((t) => (t.id === id ? newTask : t)));
-        console.log("✅ Status updated in API:", newTask);
+        setTodos((prev) => {
+          // Remover la tarea de su posición actual
+          const filtered = prev.filter((t) => t.id !== taskId);
+
+          // Si position es 0, insertar al inicio; si no, agregar al final
+          if (position === 0) {
+            return [updatedTask, ...filtered];
+          }
+          return [...filtered, updatedTask];
+        });
+        console.log("✅ Task moved in API:", updatedTask);
       } else {
         const updatedTask = { ...task, status: newStatus };
         const localTasks = getLocalTasks();
-        const updatedTasks = localTasks.map((t) =>
-          t.id === id ? updatedTask : t
-        );
-        saveLocalTasks(updatedTasks);
 
-        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
-        console.log("✅ Status updated in localStorage:", updatedTask);
+        const filtered = localTasks.filter((t) => t.id !== taskId);
+
+        let updatedTasks;
+        if (position === 0) {
+          updatedTasks = [updatedTask, ...filtered];
+        } else {
+          updatedTasks = [...filtered, updatedTask];
+        }
+
+        saveLocalTasks(updatedTasks);
+        setTodos((prev) => updatedTasks);
+        console.log("✅ Task moved in localStorage:", updatedTask);
       }
     } catch (err) {
-      console.error("❌ Error updating status:", err);
+      console.error("❌ Error moving task:", err);
     }
   };
-
-  const filteredTodos = todos.filter((t) =>
-    (t.text || "").toLowerCase().includes((search || "").toLowerCase())
-  );
-
-  const todoTasks = filteredTodos.filter((t) => t.status === "todo");
-  const progressTasks = filteredTodos.filter((t) => t.status === "progress");
-  const completedTasks = filteredTodos.filter((t) => t.status === "completed");
-
   return (
-    <div>
-      <SearchBar search={search} setSearch={setSearch} />
-
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 overflow-x-auto pb-4">
-        <Column
-          title="📝 To Do"
-          tasks={todoTasks}
-          onDelete={deleteTask}
-          onEdit={handleEdit}
-          onStatusChange={handleStatusChange}
-          bgColor="bg-gradient-to-r from-slate-600 to-slate-700"
-          textColor="text-white"
-          columnStatus="todo"
-          addTask={addTask}
-        />
-        <Column
-          title="🚀 In Progress"
-          tasks={progressTasks}
-          onDelete={deleteTask}
-          onEdit={handleEdit}
-          onStatusChange={handleStatusChange}
-          bgColor="bg-gradient-to-r from-yellow-500 to-yellow-600"
-          textColor="text-white"
-          columnStatus="progress"
-          addTask={addTask}
-        />
-        <Column
-          title="✅ Completed"
-          tasks={completedTasks}
-          onDelete={deleteTask}
-          onEdit={handleEdit}
-          onStatusChange={handleStatusChange}
-          bgColor="bg-gradient-to-r from-green-500 to-green-600"
-          textColor="text-white"
-          columnStatus="completed"
-          addTask={addTask}
-        />
-      </div>
+    <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 overflow-x-auto pb-4">
+      <Column
+        title="📝 To Do"
+        tasks={todoTasks}
+        onDelete={deleteTask}
+        onEdit={handleEdit}
+        onStatusChange={handleStatusChange}
+        bgColor="bg-gradient-to-r from-slate-600 to-slate-700"
+        textColor="text-white"
+        columnStatus="todo"
+        addTask={addTask}
+      />
+      <Column
+        title="🚀 In Progress"
+        tasks={progressTasks}
+        onDelete={deleteTask}
+        onEdit={handleEdit}
+        onStatusChange={handleStatusChange}
+        bgColor="bg-gradient-to-r from-yellow-500 to-yellow-600"
+        textColor="text-white"
+        columnStatus="progress"
+        addTask={addTask}
+      />
+      <Column
+        title="✅ Completed"
+        tasks={completedTasks}
+        onDelete={deleteTask}
+        onEdit={handleEdit}
+        onStatusChange={handleStatusChange}
+        bgColor="bg-gradient-to-r from-green-500 to-green-600"
+        textColor="text-white"
+        columnStatus="completed"
+        addTask={addTask}
+      />
     </div>
   );
 }
