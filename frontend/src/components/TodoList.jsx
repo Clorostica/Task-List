@@ -67,148 +67,124 @@ export default function TodoList({
       }
     } catch (error) {
       console.error("Error creating task:", error);
-      setTodos(todos.filter((task) => task.id !== taskId));
+      setTodos(todos);
       alert("Oops! something went wrong creating your task :(");
     }
   };
 
   // Eliminar tarea
   const deleteTask = async (taskId) => {
-    if (token && isAuthenticated) {
-      try {
-        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    const tasks = getTasks();
 
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
+    setTodos((prev) => prev.filter((task) => task.id !== taskId));
 
-        setTodos((prev) => prev.filter((task) => task.id !== taskId));
-      } catch (error) {
-        console.error("Error deleting task:", error);
+    if (!isAuthenticated) {
+      const updatedTasks = tasks.filter((task) => task.id !== taskId);
+      saveTasks(updatedTasks);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
       }
-    } else {
-      try {
-        const tasks = getTasks();
-        const updatedTasks = tasks.filter((task) => task.id !== taskId);
-
-        saveTasks(updatedTasks);
-        setTodos((prev) => prev.filter((task) => task.id !== taskId));
-      } catch (error) {
-        console.error("Error deleting local task:", error);
-      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      setTodos(todos);
+      alert("Oops! something went wrong deleting your task :(");
     }
   };
 
   // Editar tarea
   const handleEdit = async (id, newText) => {
+    const task = todos.find((task) => task.id === id);
+    if (!task) return;
+
+    const updatedTask = { ...task, text: newText };
+    setTodos((prevTodos) =>
+      prevTodos.map((task) => (task.id === id ? updatedTask : task))
+    );
+
+    if (!isAuthenticated) {
+      const localTasks = getTasks();
+      const updatedTasks = localTasks.map((task) =>
+        task.id === id ? updatedTask : task
+      );
+      saveTasks(updatedTasks);
+      return;
+    }
+
     try {
-      const task = todos.find((t) => t.id === id);
-      if (!task) return;
+      const res = await fetch(`${API_URL}/tasks/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: newText,
+          status: task.status,
+        }),
+      });
 
-      if (token && isAuthenticated) {
-        const res = await fetch(`${API_URL}/tasks/${id}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: newText,
-            status: task.status,
-          }),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`Error updating task: ${res.status} - ${errText}`);
-        }
-
-        const resTask = await res.json();
-        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
-
-        setTodos((prev) => prev.map((t) => (t.id === id ? newTask : t)));
-        console.log("✅ Task updated in API:", newTask);
-      } else {
-        const updatedTask = { ...task, text: newText };
-
-        const localTasks = getTasks();
-        const updatedTasks = localTasks.map((t) =>
-          t.id === id ? updatedTask : t
-        );
-        saveTasks(updatedTasks);
-
-        setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
-        console.log("✅ Task updated in localStorage:", updatedTask);
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
       }
     } catch (err) {
-      console.error("❌ Error editing task:", err);
+      console.error("Error editing task:", err);
+      setTodos(todos);
+      alert("Oops! something went wrong editing your task :(");
     }
   };
 
   const handleStatusChange = async (taskId, newStatus, position = null) => {
-    try {
-      const task = todos.find((t) => t.id === taskId);
-      if (!task) {
-        console.error("Task not found:", taskId);
-        return;
-      }
+    const task = todos.find((task) => task.id === taskId);
+    const updatedTask = { ...task, status: newStatus };
+    const filteredTodos = todos.filter((task) => task.id !== taskId);
+    const updatedTasks =
+      position === 0
+        ? [updatedTask, ...filteredTodos]
+        : [...filteredTodos, updatedTask];
+    setTodos(updatedTasks);
 
-      if (token && isAuthenticated) {
-        const res = await fetch(`${API_URL}/tasks/${taskId}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text: task.text,
-            status: newStatus,
-          }),
-        });
-
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-
-        const resTask = await res.json();
-        const updatedTask = _.mapKeys(resTask, (value, key) =>
-          _.camelCase(key)
-        );
-
-        setTodos((prev) => {
-          // Remover la tarea de su posición actual
-          const filtered = prev.filter((t) => t.id !== taskId);
-
-          // Si position es 0, insertar al inicio; si no, agregar al final
-          if (position === 0) {
-            return [updatedTask, ...filtered];
-          }
-          return [...filtered, updatedTask];
-        });
-        console.log("✅ Task moved in API:", updatedTask);
-      } else {
-        const updatedTask = { ...task, status: newStatus };
-        const localTasks = getTasks();
-
-        const filtered = localTasks.filter((t) => t.id !== taskId);
-
-        let updatedTasks;
-        if (position === 0) {
-          updatedTasks = [updatedTask, ...filtered];
-        } else {
-          updatedTasks = [...filtered, updatedTask];
-        }
-
-        saveTasks(updatedTasks);
-        setTodos((prev) => updatedTasks);
-        console.log("✅ Task moved in localStorage:", updatedTask);
-      }
-    } catch (err) {
-      console.error("❌ Error moving task:", err);
+    if (!task) {
+      console.error("Task not found:", taskId);
+      return;
     }
+
+    if (!isAuthenticated) {
+      saveTasks(updatedTasks);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: task.text,
+          status: newStatus,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Error: ${res.status}`);
+    } catch (err) {
+      console.error("Error editing task:", err);
+      alert("Oops! something went wrong editing your task :(");
+      setTodos(todos);
+    }
+
+    console.log("✅ Task moved in API:", updatedTask);
   };
   return (
     <div className="flex flex-col sm:flex-row gap-4 sm:gap-0 overflow-x-auto pb-4">
