@@ -1,6 +1,9 @@
 import React from "react";
 import Column from "./Column";
 import _ from "lodash";
+import { v4 as uuidv4 } from "uuid";
+
+import { getTasks, saveTasks } from "../utils/storage";
 
 const API_URL = import.meta.env.VITE_API;
 
@@ -11,8 +14,6 @@ export default function TodoList({
   token,
   isAuthenticated,
 }) {
-  const STORAGE_KEY = "nouser_tasks";
-
   function getColorClass() {
     const colors = [
       "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-400",
@@ -31,75 +32,43 @@ export default function TodoList({
     (t.text || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
-  const getLocalTasks = () => {
-    try {
-      const tasks = localStorage.getItem(STORAGE_KEY);
-      return tasks ? JSON.parse(tasks) : [];
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return [];
-    }
-  };
-  const saveLocalTasks = (tasks) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    } catch (error) {
-      console.error("Error saving to localStorage:", error);
-    }
-  };
-
   const todoTasks = filteredTodos.filter((t) => t.status === "todo");
   const progressTasks = filteredTodos.filter((t) => t.status === "progress");
   const completedTasks = filteredTodos.filter((t) => t.status === "completed");
 
   const addTask = async (status = "todo") => {
-    if (token && isAuthenticated) {
-      try {
-        const res = await fetch(`${API_URL}/tasks`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status,
-            text: "",
-            colorClass,
-          }),
-        });
+    const taskId = uuidv4();
+    const newTask = {
+      id: taskId,
+      status,
+      text: "",
+      colorClass,
+    };
+    setTodos((prevTodos) => [...prevTodos, newTask]);
 
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
+    if (!isAuthenticated) {
+      const existingTasks = getTasks();
+      saveTasks([...existingTasks, newTask]);
+      return;
+    }
 
-        const resTask = await res.json();
-        const newTask = _.mapKeys(resTask, (value, key) => _.camelCase(key));
-        console.log("Task created:", newTask);
+    try {
+      const res = await fetch(`${API_URL}/tasks`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTask),
+      });
 
-        setTodos((prev) => [...prev, newTask]);
-      } catch (error) {
-        console.error("Error creating task:", error);
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
       }
-    } else {
-      try {
-        const newTask = {
-          id: Date.now().toString(),
-          status,
-          text: "",
-          createdAt: new Date().toISOString(),
-          colorClass,
-        };
-
-        console.log("Task created locally:", newTask);
-
-        const existingTasks = getLocalTasks();
-        const updatedTasks = [...existingTasks, newTask];
-
-        saveLocalTasks(updatedTasks);
-        setTodos((prev) => [...prev, newTask]);
-      } catch (error) {
-        console.error("Error creating local task:", error);
-      }
+    } catch (error) {
+      console.error("Error creating task:", error);
+      setTodos(todos.filter((task) => task.id !== taskId));
+      alert("Oops! something went wrong creating your task :(");
     }
   };
 
@@ -124,10 +93,10 @@ export default function TodoList({
       }
     } else {
       try {
-        const tasks = getLocalTasks();
+        const tasks = getTasks();
         const updatedTasks = tasks.filter((task) => task.id !== taskId);
 
-        saveLocalTasks(updatedTasks);
+        saveTasks(updatedTasks);
         setTodos((prev) => prev.filter((task) => task.id !== taskId));
       } catch (error) {
         console.error("Error deleting local task:", error);
@@ -167,11 +136,11 @@ export default function TodoList({
       } else {
         const updatedTask = { ...task, text: newText };
 
-        const localTasks = getLocalTasks();
+        const localTasks = getTasks();
         const updatedTasks = localTasks.map((t) =>
           t.id === id ? updatedTask : t
         );
-        saveLocalTasks(updatedTasks);
+        saveTasks(updatedTasks);
 
         setTodos((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
         console.log("✅ Task updated in localStorage:", updatedTask);
@@ -222,7 +191,7 @@ export default function TodoList({
         console.log("✅ Task moved in API:", updatedTask);
       } else {
         const updatedTask = { ...task, status: newStatus };
-        const localTasks = getLocalTasks();
+        const localTasks = getTasks();
 
         const filtered = localTasks.filter((t) => t.id !== taskId);
 
@@ -233,7 +202,7 @@ export default function TodoList({
           updatedTasks = [...filtered, updatedTask];
         }
 
-        saveLocalTasks(updatedTasks);
+        saveTasks(updatedTasks);
         setTodos((prev) => updatedTasks);
         console.log("✅ Task moved in localStorage:", updatedTask);
       }

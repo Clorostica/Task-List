@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import TodoList from "./components/TodoList";
 import Search from "./components/Search";
+import { getTasks } from "./utils/storage";
 
 export default function App() {
   const { user, getIdTokenClaims, isAuthenticated, isLoading } = useAuth0();
@@ -12,19 +13,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [token, setToken] = useState(null);
 
-  const STORAGE_KEY = "nouser_tasks";
-
   const API_URL = import.meta.env.VITE_API;
-
-  const getLocalTasks = () => {
-    try {
-      const tasks = localStorage.getItem(STORAGE_KEY);
-      return tasks ? JSON.parse(tasks) : [];
-    } catch (error) {
-      console.error("Error reading from localStorage:", error);
-      return [];
-    }
-  };
 
   const createUser = async () => {
     try {
@@ -93,7 +82,7 @@ export default function App() {
           }
         } else if (!isLoading) {
           setToken(null);
-          const localTasks = getLocalTasks();
+          const localTasks = getTasks();
           setTodos(localTasks);
           console.log("✅ Tasks loaded from localStorage:", localTasks);
         }

@@ -1,7 +1,7 @@
 exports.up = (pgm) => {
   pgm.createTable("task_list", {
     id: {
-      type: "serial",
+      type: "uuid",
       primaryKey: true,
     },
     user_id: {
