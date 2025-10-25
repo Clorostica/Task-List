@@ -1,9 +1,9 @@
-const { Pool } = require("pg");
-const express = require("express");
-const cors = require("cors");
-const { expressjwt } = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
-const dotenv = require("dotenv");
+import { Pool, DatabaseError } from "pg";
+import express from "express";
+import cors from "cors";
+import { expressjwt } from "express-jwt";
+import jwksRsa from "jwks-rsa";
+import dotenv from "dotenv";
 dotenv.config();
 
 const checkJwt = expressjwt({
@@ -36,6 +36,10 @@ app.get("/", (_, res) => {
 
 //Obtener usuario específico
 app.get("/users", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const userId = sub;
@@ -56,6 +60,10 @@ app.get("/users", checkJwt, async (req, res) => {
 });
 
 app.post("/users", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub, email } = req.auth;
 
@@ -68,7 +76,7 @@ app.post("/users", checkJwt, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    if (err.code === "23505") {
+    if (err instanceof DatabaseError && err.code === "23505") {
       //← Código PostgreSQL para "valor duplicado"
       return res.status(400).json({ error: "User already exists" }); // Si el email ya existe, devuelve error específico.
     }
@@ -78,6 +86,10 @@ app.post("/users", checkJwt, async (req, res) => {
 
 // POST - Crear nueva tarea
 app.post("/tasks", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const userId = sub;
@@ -109,6 +121,10 @@ app.post("/tasks", checkJwt, async (req, res) => {
 
 // PUT - Editar tarea
 app.put("/tasks/:taskId", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const { taskId } = req.params;
@@ -142,6 +158,10 @@ app.put("/tasks/:taskId", checkJwt, async (req, res) => {
 
 // GET - Obtener tarea por ID
 app.get("/tasks/:id", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const { id } = req.params;
@@ -167,6 +187,10 @@ app.get("/tasks/:id", checkJwt, async (req, res) => {
 });
 
 app.delete("/tasks/:id", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const { id } = req.params;
@@ -198,6 +222,10 @@ app.delete("/tasks/:id", checkJwt, async (req, res) => {
 
 // GET - Obtener todas las tareas por user_id
 app.get("/tasks", checkJwt, async (req, res) => {
+  if (!req.auth) {
+    return res.status(401).json({ error: "Auth is required" });
+  }
+
   try {
     const { sub } = req.auth;
     const userId = sub;
@@ -215,7 +243,7 @@ app.get("/tasks", checkJwt, async (req, res) => {
 
     if (status) {
       query += " AND status = $2";
-      params.push(status);
+      params.push(status.toString());
     }
 
     query += " ORDER BY id DESC";
