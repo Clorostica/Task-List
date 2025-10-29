@@ -1,19 +1,20 @@
 import React from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useEffect, useState } from "react";
+import { getTasks } from "./utils/storage";
+import type { Task } from "./types/tasks/task.types";
 import Header from "./components/Header";
 import TodoList from "./components/TodoList";
-import Search from "./components/Search";
-import { getTasks } from "./utils/storage";
+import Search from "./components/Search"; 
 
 export default function App() {
   const { user, getIdTokenClaims, isAuthenticated, isLoading } = useAuth0();
 
-  const [todos, setTodos] = useState([]);
-  const [search, setSearch] = useState("");
-  const [token, setToken] = useState(null);
+  const [search, setSearch] = useState<string>("");
+  const [token, setToken] = useState<string | null>(null);
+  const [todos, setTodos] = useState<Task[]>([]);
 
-  const API_URL = import.meta.env.VITE_API;
+  const API_URL = import.meta.env.VITE_API as string;
 
   const createUser = async () => {
     try {
@@ -68,10 +69,10 @@ export default function App() {
             if (!res.ok) throw new Error("Error loading tasks");
 
             const data = await res.json();
-            const tasks = data.tasks.map((task) =>
+            const tasks = data.tasks.map((task: Task) =>
               Object.fromEntries(
                 Object.entries(task).map(([key, value]) => [
-                  key.replace(/_([a-z])/g, (g) => g[1].toUpperCase()),
+                  key.replace(/_([a-z])/g, (g: any) => g[1].toUpperCase()),
                   value,
                 ])
               )
@@ -118,7 +119,7 @@ export default function App() {
           <Search search={search} setSearch={setSearch} />
         </div>
         <div className="w-full sm:w-auto sm:flex-1 flex justify-center sm:justify-end">
-          <Header isAuthenticated={isAuthenticated} />
+          <Header />
         </div>
       </div>
 

@@ -1,6 +1,11 @@
 import React from "react";
 
-export default function Search({ search, setSearch }) {
+interface SearchProps {
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export default function Search({ search, setSearch }: SearchProps) {
   return (
     <input
       type="text"

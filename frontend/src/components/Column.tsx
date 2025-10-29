@@ -1,8 +1,21 @@
 import React, { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import StickyNote from "./StickyNote";
+import type { Task } from "../types/tasks/task.types";
 
-const Column = forwardRef(function Column(
+type ColumnProps = {
+  title: string;
+  tasks: Task[];
+  onDelete: (taskId: string) => void;
+  onEdit: (taskId: string, newTitle: string) => void;
+  onStatusChange: (taskId: string, newStatus: string) => void;
+  bgColor: string;
+  textColor: string;
+  columnStatus: string;
+  addTask: (status: string) => void;
+};
+
+const Column = forwardRef<HTMLDivElement, ColumnProps>(function Column(
   {
     title,
     tasks,
@@ -21,19 +34,19 @@ const Column = forwardRef(function Column(
 
   const taskCount = tasks?.length || 0;
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setIsOver(true);
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     if (e.currentTarget === e.target) {
       setIsOver(false);
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsOver(false);
@@ -59,7 +72,7 @@ const Column = forwardRef(function Column(
         taskData.status !== columnStatus &&
         onStatusChange
       ) {
-        onStatusChange(taskData.id, columnStatus, 0);
+        onStatusChange(taskData.id, columnStatus);
       }
     } catch (err) {
       console.error("Error parsing dropped data:", err);
@@ -123,12 +136,12 @@ const Column = forwardRef(function Column(
             tasks.map((task) => (
               <StickyNote
                 key={task.id}
-                id={task.id}
+                id={String(task.id)}
                 text={task.text}
                 status={task.status}
                 onEdit={onEdit}
                 onStatusChange={onStatusChange}
-                onDelete={() => onDelete(task.id)}
+                onDelete={() => onDelete(task.id as any)}
                 colorClass={task.colorClass}
               />
             ))
