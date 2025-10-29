@@ -2,6 +2,7 @@ import React from "react";
 import Column from "./Column";
 import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
+import type { Task } from "../types/tasks/task.types";
 
 import { getTasks, saveTasks } from "../utils/storage";
 
@@ -13,6 +14,12 @@ export default function TodoList({
   search,
   token,
   isAuthenticated,
+}: {
+  todos: Task[];
+  setTodos: React.Dispatch<React.SetStateAction<Task[]>>;
+  search: string;
+  token: string | null;
+  isAuthenticated: boolean;
 }) {
   function getColorClass() {
     const colors = [
@@ -73,7 +80,7 @@ export default function TodoList({
   };
 
   // Eliminar tarea
-  const deleteTask = async (taskId) => {
+  const deleteTask = async (taskId: string) => {
     const tasks = getTasks();
 
     setTodos((prev) => prev.filter((task) => task.id !== taskId));
@@ -103,7 +110,7 @@ export default function TodoList({
   };
 
   // Editar tarea
-  const handleEdit = async (id, newText) => {
+  const handleEdit = async (id: string, newText: string) => {
     const task = todos.find((task) => task.id === id);
     if (!task) return;
 
@@ -144,8 +151,18 @@ export default function TodoList({
     }
   };
 
-  const handleStatusChange = async (taskId, newStatus, position = null) => {
+  const handleStatusChange = async (
+    taskId: string,
+    newStatus: string,
+    position = null
+  ) => {
     const task = todos.find((task) => task.id === taskId);
+
+    if (!task) {
+      console.error("Task not found:", taskId);
+      return;
+    }
+
     const updatedTask = { ...task, status: newStatus };
     const filteredTodos = todos.filter((task) => task.id !== taskId);
     const updatedTasks =
@@ -153,11 +170,6 @@ export default function TodoList({
         ? [updatedTask, ...filteredTodos]
         : [...filteredTodos, updatedTask];
     setTodos(updatedTasks);
-
-    if (!task) {
-      console.error("Task not found:", taskId);
-      return;
-    }
 
     if (!isAuthenticated) {
       saveTasks(updatedTasks);
