@@ -1,4 +1,4 @@
-import type { Task } from "../types/tasks/task.types";
+import type { Task } from "@/types/tasks/task.types";
 const NO_USER_TODO_TASKS_KEY = "tasks:nouser";
 
 export const getTasks = (): Task[] => {

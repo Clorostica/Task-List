@@ -2,7 +2,7 @@ import React from "react";
 import Column from "./Column";
 import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
-import type { Task } from "../types/tasks/task.types";
+import type { Task } from "@/types/tasks/task.types";
 
 import { getTasks, saveTasks } from "../utils/storage";
 

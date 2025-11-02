@@ -1,7 +1,7 @@
 import React, { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import StickyNote from "./StickyNote";
-import type { Task } from "../types/tasks/task.types";
+import StickyNote from "@/components/StickyNote";
+import type { Task } from "@/types/tasks/task.types";
 
 type ColumnProps = {
   title: string;

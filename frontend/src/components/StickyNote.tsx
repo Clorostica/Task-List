@@ -1,6 +1,5 @@
 import React, { useState, forwardRef } from "react";
 import { motion } from "framer-motion";
-import type { Task } from "../types/tasks/task.types";
 
 type StickyNoteProps = {
   key: string;
