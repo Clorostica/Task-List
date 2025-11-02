@@ -1,4 +1,4 @@
-exports.up = (pgm) => {
+export const up = (pgm: any) => {
   pgm.createTable("task_list", {
     id: {
       type: "uuid",
@@ -23,6 +23,6 @@ exports.up = (pgm) => {
   });
 };
 
-exports.down = (pgm) => {
+export const down = (pgm: any) => {
   pgm.dropTable("task_list");
 };
