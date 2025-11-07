@@ -1,7 +1,7 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    "baseUrl": "src",
+    "baseUrl": "app",
     "paths": {
       "@/*": ["*"]
     },
@@ -11,8 +11,13 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
     "target": "esnext",
+    "forceConsistentCasingInFileNames": true,
+    // "outDir": "./dist",
+    // "rootDir": "./src",
     // "types": [],
     // For nodejs:
     // "lib": ["esnext"],
