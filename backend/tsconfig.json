@@ -1,23 +1,23 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
+  "include": ["app/**/*"],
+  "exclude": ["node_modules", "dist", "migrations"],
   "compilerOptions": {
     "baseUrl": "app",
     "paths": {
       "@/*": ["*"]
     },
     // File Layout
-    // "rootDir": "./src",
-    // "outDir": "./dist",
+    "rootDir": "./app",
+    "outDir": "./dist",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "ESNext",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "target": "esnext",
+    "target": "ES2022",
     "forceConsistentCasingInFileNames": true,
-    // "outDir": "./dist",
-    // "rootDir": "./src",
     // "types": [],
     // For nodejs:
     // "lib": ["esnext"],

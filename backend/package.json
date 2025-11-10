@@ -4,7 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon --exec tsx app/index.ts",
+    "dev": "nodemon --exec tsx app/index.ts",
+    "build": "tsup",
+    "start": "node dist/index.js",
     "migrate:up": "node-pg-migrate --config-file database.json up",
     "migrate:down": "node-pg-migrate --config-file database.json down"
   },
@@ -25,6 +27,7 @@
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsup": "^8.3.5",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
