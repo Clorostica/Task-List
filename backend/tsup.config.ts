@@ -11,4 +11,5 @@ export default defineConfig({
   target: "es2022",
   platform: "node",
   bundle: true,
+  tsconfig: "./tsconfig.json",
 });
