@@ -22,3 +22,4 @@ build/
 
 # node-pg-migrate artifacts (if any)
 .migrations/
+.vercel
