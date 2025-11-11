@@ -1,4 +1,4 @@
-export const up = (pgm: any) => {
+export const up = (pgm) => {
   pgm.createTable("users", {
     id: {
       type: "text",
@@ -12,6 +12,7 @@ export const up = (pgm: any) => {
   });
 };
 
-export const down = (pgm: any) => {
+export const down = (pgm) => {
   pgm.dropTable("users");
 };
+

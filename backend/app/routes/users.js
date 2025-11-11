@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { pool } from "@/db/pool";
-import { authenticate } from "@/middleware/auth";
-import { DatabaseError } from "pg";
+import { pool } from "../db/pool.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -38,10 +37,11 @@ router.post("/", authenticate, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    if (err instanceof DatabaseError && err.code === "23505")
+    if (err.code === "23505")
       return res.status(400).json({ error: "User already exists" });
     res.status(500).json({ error: "Database error" });
   }
 });
 
 export default router;
+

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { pool } from "@/db/pool";
-import { authenticate } from "@/middleware/auth";
+import { pool } from "../db/pool.js";
+import { authenticate } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -139,3 +139,4 @@ router.delete("/:id", authenticate, async (req, res) => {
 });
 
 export default router;
+

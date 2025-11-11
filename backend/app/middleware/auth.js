@@ -14,3 +14,4 @@ export const authenticate = expressjwt({
   issuer: process.env.AUTH0_ISSUER,
   algorithms: ["RS256"],
 });
+
